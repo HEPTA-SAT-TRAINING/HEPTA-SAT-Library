@@ -1,14 +1,20 @@
-#include "hepta_temperature.h"
 #include "hepta_9axis.h"
+#include <Wire.h>
 
-HeptaTemp temp_sensor;
 Hepta9Axis imu;
 
 void setup() {
-  imu.setup();
-  float temp = temp_sensor.get_temperature();
+  Serial.begin(9600);
+  imu.begin();
+  Serial.println("start");
 }
 
 void loop() {
+  Serial.println("--------------------------");
+  imu.print_acc();
+  imu.print_gyro();
+  imu.print_mag();
+  Serial.println("--------------------------");
 
+  delay(250);  
 }

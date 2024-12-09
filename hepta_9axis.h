@@ -1,12 +1,11 @@
 /**
  * @file hepta_9axis.h
  * @author Masaki Naito
- * @brief 
+ * @brief Arduino Library for BMX055
  * @version 0.1
- * @date 2024-08-22
+ * @date 2024-12-09
  * 
  * @copyright UNISEC all rights reserved.
- * 
  */
 
 
@@ -14,36 +13,41 @@
 #define HEPTA_9AXIS_H
 
 #include <Arduino.h>
-#include <stdint.h>
 
 class Hepta9Axis {
   public:
-    Hepta9Axis();
+    /**
+     * @brief Begin transmittion with BMX055
+     */
+    void begin(void);
 
-    int addr_accel;
-    int addr_gyro;
-    int addr_compus;
+    /**
+     * @brief Get acceleration data from BMX055
+     * @note unit is m/s^2, range is +-4G
+     */
+    void sen_acc(float *ax, float *ay, float *az);
 
-    void sen_acc(float *ax,float *ay,float *az);
-    void sen_gyro(float *gx,float *gy,float *gz);
-    void sen_mag(float *mx,float *my,float *mz);
+    /**
+     * @brief Get gyro data from BMX 055
+     * @note unit is deg/s, range is +-125deg/s
+     */
+    void sen_gyro(float *gx, float *gy, float *gz);
 
-  private:
-    char g1[8],g2[8];
-    char a1[8],a2[8];
-    char m1[8],m2[8];
-    short int st2;
-    short int xl,xh,yl,yh,zl,zh;
-    short int gxl,gxh,gyl,gyh,gzl,gzh;
-    short int mxl,mxh,myl,myh,mzl,mzh;
-    
-    float accel[3];
-    float magnet[3];
-    float gyroscope[3];
-    char cmd[2];
+    /**
+     * @brief Get magnetometer data from BMX055
+     * @note unit is uT
+     */
+    void sen_mag(float *mx, float *my, float *mz);
+
+    void print_acc(void);
+    void print_gyro(void);
+    void print_mag(void);
+
+  private: 
     uint8_t data[8];
-    char send[1], get[1];
-    char temp;
+    const uint8_t I2C_ADDR_ACC = 0x19;
+    const uint8_t I2C_ADDR_GYRO = 0x69;
+    const uint8_t I2C_ADDR_MAG = 0x13;
 };
 
 
