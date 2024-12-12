@@ -54,50 +54,65 @@ int8_t RealTimeClock::begin() {
   // get_weekday();
 }
 
-uint64_t RealTimeClock::get_time_unix_ms() {
+time_t RealTimeClock::get_time_unix() {
   struct tm calender_time;
-  time_t unix_time;
 
-  calender_time.tm_sec = get_second();
-  calender_time.tm_min = get_minute();
-  calender_time.tm_hour = get_hour();
-  calender_time.tm_mday = get_date();
+  get_time(&calender_time);
 
-  // tm構造体の月は1月からの経過月数
-  calender_time.tm_mon = get_month() - 1;
-
-  // tm構造体の年は1900年からの経過年数
-  calender_time.tm_year = get_year() - 1900;
-
-  Serial.print(calender_time.tm_year + 1900);
-  Serial.print(" ");
-  Serial.print(calender_time.tm_mon + 1);
-  Serial.print(" ");
-  Serial.print(calender_time.tm_mday);
-  Serial.print(" ");
-  Serial.print(calender_time.tm_hour);
-  Serial.print(" ");
-  Serial.print(calender_time.tm_min);
-  Serial.print(" ");
-  Serial.println(calender_time.tm_sec);
-
-  unix_time = mktime(&calender_time);
-
-  // ミリ秒にするために1000倍して返す
-  return (unix_time * 1000);
+  return mktime(&calender_time);
 }
 
-void RealTimeClock::set_time_unix_ms(uint64_t unix_time_ms) {
-  time_t unix_time = unix_time_ms / 1000;
+void RealTimeClock::get_time(struct tm* calender_time) {
+  calender_time->tm_sec = get_second();
+  calender_time->tm_min = get_minute();
+  calender_time->tm_hour = get_hour();
+  calender_time->tm_mday = get_date();
+
+  // tm構造体の月は1月からの経過月数
+  calender_time->tm_mon = get_month() - 1;
+
+  // tm構造体の年は1900年からの経過年数
+  calender_time->tm_year = get_year() - 1900;
+}
+
+void RealTimeClock::set_time_unix(time_t unix_time) {
   struct tm *calender_time = gmtime(&unix_time);
 
+  set_time(calender_time);
+}
+
+void RealTimeClock::set_time(struct tm* calender_time) {
   set_year(calender_time->tm_year + 1900);
   set_month(calender_time->tm_mon + 1);
   set_date(calender_time->tm_mday);
   set_hour(calender_time->tm_hour);
   set_minute(calender_time->tm_min);
-  set_second(calender_time->tm_sec);
+  set_second(calender_time->tm_sec);  
 }
+
+void RealTimeClock::print_time(time_t unix_time) {
+  struct tm *calender_time = gmtime(&unix_time);
+  print_time(calender_time);
+}
+
+void RealTimeClock::print_time(struct tm* calender_time) {
+  Serial.print(calender_time->tm_year + 1900);
+  Serial.print("/");
+  Serial.print(calender_time->tm_mon + 1);
+  Serial.print("/");
+  Serial.print(calender_time->tm_mday);
+  Serial.print(" ");
+  Serial.print(calender_time->tm_hour);
+  Serial.print(":");
+  Serial.print(calender_time->tm_min);
+  Serial.print(":");
+  Serial.println(calender_time->tm_sec);
+}
+
+void RealTimeClock::print_time(void) {
+  print_time(get_time_unix());
+}
+
 
 /*------------------------------------------
   Private Functions
@@ -239,6 +254,7 @@ uint8_t RealTimeClock::mcp79410_read_reg(RTCC_REG reg) {
 
   Wire.beginTransmission(MCP79410_RTCC_ADDR);
   Wire.write((uint8_t)reg);
+  Wire.endTransmission();
 
   Wire.requestFrom(MCP79410_RTCC_ADDR, 1);
   if (Wire.available() == 1) {

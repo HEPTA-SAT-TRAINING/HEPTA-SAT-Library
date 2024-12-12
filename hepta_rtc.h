@@ -13,8 +13,16 @@
 class RealTimeClock {
   public:
     int8_t begin();
-    uint64_t get_time_unix_ms();
-    void set_time_unix_ms(uint64_t unix_time_ms);
+
+    time_t get_time_unix();
+    void get_time(struct tm* calender_time);
+
+    void set_time_unix(time_t unix_time);
+    void set_time(struct tm* calender_time);
+
+    void print_time(time_t unix_time);
+    void print_time(struct tm* calender_time);
+    void print_time(void);
 
   private:
     typedef enum {

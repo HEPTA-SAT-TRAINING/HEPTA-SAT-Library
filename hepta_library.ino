@@ -5,24 +5,21 @@
 Hepta9Axis imu;
 RealTimeClock rtc;
 
-
 void setup() {
   Serial.begin(9600);
   imu.begin();
   rtc.begin();
-  rtc.set_time_unix_ms(100000);
   Serial.println("start");
+  rtc.set_time_unix(1733967585);
 }
 
 void loop() {
-  Serial.print("Time: ");
-  Serial.println(rtc.get_time_unix_ms());
-
+  rtc.print_time();
   Serial.println("--------------------------");
   imu.print_acc();
   imu.print_gyro();
   imu.print_mag();
   Serial.println("--------------------------");
 
-  delay(250);  
+  delay(1000);
 }
