@@ -14,6 +14,28 @@
 
 #include <Arduino.h>
 
+typedef enum {
+  NO_ERROR,
+  COMM_ERROR,
+  VALUE_ERROR,
+  UNKNOWN_ERROR
+} ICM20948_ERROR;
+
+typedef enum {
+  ACCEL_FS_2G = 0,
+  ACCEL_FS_4G = 1,
+  ACCEL_FS_8G = 2,
+  ACCEL_FS_16G = 3
+} ACCEL_FS_SEL;
+
+typedef enum {
+  GYRO_FS_250dps = 0,
+  GYRO_FS_500dps = 1,
+  GYRO_FS_1000dps = 2,
+  GYRO_FS_2000dps = 3
+} GYRO_FS_SEL;
+
+
 class Icm20948 {
   public:
     /**
@@ -25,31 +47,87 @@ class Icm20948 {
      * @brief Get acceleration data
      * @note unit is m/s^2, range is +-4G
      */
-    void sen_acc(float *ax, float *ay, float *az);
+    void get_accel(float *ax, float *ay, float *az);
 
     /**
      * @brief Get gyro data
      * @note unit is deg/s, range is +-125deg/s
      */
-    void sen_gyro(float *gx, float *gy, float *gz);
+    void get_gyro(float *gx, float *gy, float *gz);
 
     /**
      * @brief Get magnetometer data
      * @note unit is uT
      */
-    void sen_mag(float *mx, float *my, float *mz);
+    void get_mag(float *mx, float *my, float *mz);
 
-    void print_acc(void);
+    void print_accel(void);
     void print_gyro(void);
     void print_mag(void);
 
-  private: 
-    uint8_t data[8];
+    void set_accel_scale(ACCEL_FS_SEL scale);
+    void set_gyro_scale(GYRO_FS_SEL scale);
+
+    ACCEL_FS_SEL get_accel_scale(void);
+    GYRO_FS_SEL get_gyro_scale(void);
+
+  private:
+    ACCEL_FS_SEL _accel_scale;
+    GYRO_FS_SEL _gyro_scale;
+    float _accel_sensitivity;
+    float _gyro_sensitivity;
+
+    /* ---------------------
+      IMU
+    --------------------- */
+    typedef enum {
+      BANK0,
+      BANK1,
+      BANK2,
+      BANK3
+    } ICM20948_BANK;
+
+    const float ACCEL_SCALE_FACTOR[4] = {
+      16384.0, 8192.0, 4096.0, 2048.0
+    };
+
+    const float GYRO_SCALE_FACTOR[4] = {
+      131.0, 65.5, 32.8, 16.4
+    };
 
     // 7bit address
     const uint8_t ICM20948_I2C_ADDR = 0x68;
 
-    const uint8_t REG_WHO_AM_I = 0x00;
+    // for all banks
+    const uint8_t REG_BANK_SEL = 0x7F;
+
+    // for bank0
+    const uint8_t ICM20948_WHO_AM_I = 0x00;
+    const uint8_t ICM20948_PWR_MGMT_1 = 0x06;
+    const uint8_t ICM20948_ACCEL_XOUT_H = 0x2D;
+    const uint8_t ICM20948_GYRO_XOUT_H = 0x33;
+
+    // for bank2
+    const uint8_t ICM20948_GYRO_CONFIG_1 = 0x01;
+    const uint8_t ICM20948_ODR_ALIGN_EN = 0x09;
+    const uint8_t ICM20948_ACCEL_SMPLRT_DIV_1 = 0x10;
+    const uint8_t ICM20948_ACCEL_CONFIG = 0x14;
+
+    // settings
+    const uint8_t ACCEL_DLPF = 6;
+
+    void _reset(void);
+    void _wakeup(void);
+    void _select_bank(ICM20948_BANK bank);
+  
+    void _reg_write(uint8_t reg, uint8_t val);
+    uint8_t _reg_read(uint8_t reg);
+    void _reg_read(uint8_t reg, uint8_t val[], uint8_t len);
+
+    /* ---------------------
+      MAG(AK09916)
+    --------------------- */
+    const uint8_t AK09916_I2C_ADDR = 0x0C;
 };
 
 
