@@ -35,6 +35,15 @@ typedef enum {
   GYRO_FS_2000dps = 3
 } GYRO_FS_SEL;
 
+typedef enum {
+  AK09916_PWR_DOWN           = 0x00,
+  AK09916_TRIGGER_MODE       = 0x01,
+  AK09916_CONT_MODE_10HZ     = 0x02,
+  AK09916_CONT_MODE_20HZ     = 0x04,
+  AK09916_CONT_MODE_50HZ     = 0x06,
+  AK09916_CONT_MODE_100HZ    = 0x08
+} AK09916_OP_MODE;
+
 
 class Icm20948 {
   public:
@@ -103,15 +112,36 @@ class Icm20948 {
 
     // for bank0
     const uint8_t ICM20948_WHO_AM_I = 0x00;
+    const uint8_t ICM20948_USER_CTRL = 0x03;
     const uint8_t ICM20948_PWR_MGMT_1 = 0x06;
+    const uint8_t ICM20948_INT_PIN_CFG = 0x0F;
     const uint8_t ICM20948_ACCEL_XOUT_H = 0x2D;
     const uint8_t ICM20948_GYRO_XOUT_H = 0x33;
+    const uint8_t ICM20948_EXT_SLV_SENS_DATA_00 = 0x38;
 
     // for bank2
     const uint8_t ICM20948_GYRO_CONFIG_1 = 0x01;
     const uint8_t ICM20948_ODR_ALIGN_EN = 0x09;
     const uint8_t ICM20948_ACCEL_SMPLRT_DIV_1 = 0x10;
     const uint8_t ICM20948_ACCEL_CONFIG = 0x14;
+
+    // for bank3
+    const uint8_t ICM20948_I2C_MST_ODR_CFG = 0x00;
+    const uint8_t ICM20948_I2C_MST_CTRL = 0x01;
+    const uint8_t ICM20948_I2C_MST_DELAY_CTRL = 0x02;
+    const uint8_t ICM20948_I2C_SLV0_ADDR = 0x03;
+    const uint8_t ICM20948_I2C_SLV0_REG = 0x04;
+    const uint8_t ICM20948_I2C_SLV0_CTRL = 0x05;
+    const uint8_t ICM20948_I2C_SLV0_DO = 0x06;
+    const uint8_t ICM20948_I2C_SLV4_ADDR = 0x13;
+    const uint8_t ICM20948_I2C_SLV4_REG = 0x14;
+    const uint8_t ICM20948_I2C_SLV4_CTRL = 0x15;
+    const uint8_t ICM20948_I2C_SLV4_DO = 0x16;
+    const uint8_t ICM20948_I2C_SLV4_DI = 0x17;
+
+    const uint8_t ICM20948_BYPASS_EN = 1 << 1;
+    const uint8_t ICM20948_I2C_MST_RST = 1 << 1;
+    const uint8_t ICM20948_I2C_SLVX_EN = 1 << 7;
 
     // settings
     const uint8_t ACCEL_DLPF = 6;
@@ -124,10 +154,33 @@ class Icm20948 {
     uint8_t _reg_read(uint8_t reg);
     void _reg_read(uint8_t reg, uint8_t val[], uint8_t len);
 
+    void _init_mag(void);
+    uint8_t _who_am_i_mag(void);
+    void _enable_i2c_master(void);
+    void _i2c_master_reset(void);
+    void _mag_reset(void);
+    void _set_mag_mode(AK09916_OP_MODE mode);
+    void _enable_mag_data_read(uint8_t reg, uint8_t len);
+
+    void _ak09916_reg_write(uint8_t reg, uint8_t val);
+    uint8_t _ak09916_reg_read(uint8_t reg);
+    void _ak09916_reg_read(uint8_t reg, uint8_t val[], uint8_t len);
+
     /* ---------------------
       MAG(AK09916)
     --------------------- */
     const uint8_t AK09916_I2C_ADDR = 0x0C;
+
+    const uint8_t AK09916_WHO_AM_I = 0x01;
+    const uint8_t AK09916_XAXIS_HIGH = 0x11;
+    const uint8_t AK09916_CNTL_2 = 0x31;
+    const uint8_t AK09916_CNTL_3 = 0x32;
+
+    const uint8_t AK09916_DEVICE_ID = 0x09;
+    const uint8_t AK09916_RESET = 1;
+    const uint8_t AK09916_READ = 1 << 7;
+
+    const float AK09916_MAG_LSB = 0.15;
 };
 
 

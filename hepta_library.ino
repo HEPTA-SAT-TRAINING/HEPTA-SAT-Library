@@ -13,11 +13,11 @@ void setup() {
 }
 
 void loop() {
-  // rtc.print_time();
-
+  // rtc.print_time();  
   Serial.println("--------------------------");
   icm.print_accel();
   icm.print_gyro();
+  icm.print_mag();
   Serial.println("--------------------------");
 
   delay(1000);
