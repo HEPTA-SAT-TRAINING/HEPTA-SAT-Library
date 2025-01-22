@@ -154,13 +154,8 @@ class Icm20948 {
     uint8_t _reg_read(uint8_t reg);
     void _reg_read(uint8_t reg, uint8_t val[], uint8_t len);
 
-    void _init_mag(void);
-    uint8_t _who_am_i_mag(void);
-    void _enable_i2c_master(void);
-    void _i2c_master_reset(void);
-    void _mag_reset(void);
-    void _set_mag_mode(AK09916_OP_MODE mode);
-    void _enable_mag_data_read(uint8_t reg, uint8_t len);
+    void _ak09916_init(void);
+    void _ak09916_reset(void);
 
     void _ak09916_reg_write(uint8_t reg, uint8_t val);
     uint8_t _ak09916_reg_read(uint8_t reg);

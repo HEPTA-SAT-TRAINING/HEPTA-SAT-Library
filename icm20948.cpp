@@ -8,12 +8,6 @@
  * @copyright UNISEC all rights reserved.
  */
 
-/**
- * @note 2025/01/20
- * このコードを実行した後にサンプルコードを実行すると，失敗してしまう
- * ケーブルを抜き差ししたらうまくいくので，変なアドレスにアクセスしてしまっている？
- * 
- */
 
 #include "icm20948.h"
 
@@ -32,7 +26,7 @@ void Icm20948::begin(void) {
   Serial.print("ack: ");
   Serial.println(ack, HEX);
 
-  _init_mag();
+  _ak09916_init();
 
   set_accel_scale(ACCEL_FS_2G);
   set_gyro_scale(GYRO_FS_500dps);
@@ -64,16 +58,11 @@ void Icm20948::get_mag(float *mx, float *my, float *mz) {
   uint8_t buf[6] = {0};
 
   _ak09916_reg_write(AK09916_CNTL_2, (uint8_t)AK09916_TRIGGER_MODE);
-  delay(10);
   _ak09916_reg_read(AK09916_XAXIS_HIGH, buf, 6);
 
-  int16_t mx_int = (int16_t)(buf[1] << 8 | buf[0]);
-  int16_t my_int = (int16_t)(buf[3] << 8 | buf[2]);
-  int16_t mz_int = (int16_t)(buf[5] << 8 | buf[4]);
-
-  *mx = mx_int * AK09916_MAG_LSB;
-  *my = my_int * AK09916_MAG_LSB;
-  *mz = mz_int * AK09916_MAG_LSB;
+  *mx = (int16_t)(buf[1] << 8 | buf[0]) * AK09916_MAG_LSB;
+  *my = (int16_t)(buf[3] << 8 | buf[2]) * AK09916_MAG_LSB;
+  *mz = (int16_t)(buf[5] << 8 | buf[4]) * AK09916_MAG_LSB;
 }
 
 void Icm20948::print_accel(void) {
@@ -179,41 +168,18 @@ void Icm20948::_reg_read(uint8_t reg, uint8_t val[], uint8_t len) {
   }
 }
 
-void Icm20948::_init_mag(void) {
+void Icm20948::_ak09916_init(void) {
   _select_bank(BANK0);
   _reg_write(ICM20948_INT_PIN_CFG, ICM20948_BYPASS_EN);
-  _mag_reset();
+  _ak09916_reset();
   _ak09916_reg_write(AK09916_CNTL_2, (uint8_t)AK09916_CONT_MODE_100HZ);
 
   _select_bank(BANK2);
   _reg_write(ICM20948_ODR_ALIGN_EN, 1);
 }
 
-uint8_t Icm20948::_who_am_i_mag(void) {
-  return _ak09916_reg_read(AK09916_WHO_AM_I);
-}
-
-void Icm20948::_enable_i2c_master(void) {
-  // enable I2C master
-  _select_bank(BANK0);
-  _reg_write(ICM20948_USER_CTRL, 1<<5);
-
-  // set I2C clock(345.6kHz)
-  _select_bank(BANK3);
-  _reg_write(ICM20948_I2C_MST_CTRL, 7);
-  delay(10);
-}
-
-void Icm20948::_i2c_master_reset(void) {
-  _select_bank(BANK0);
-  uint8_t val = _reg_read(ICM20948_USER_CTRL);
-  val |= ICM20948_I2C_MST_RST;
-  _reg_write(val, ICM20948_USER_CTRL);
-}
-
-void Icm20948::_mag_reset(void) {
+void Icm20948::_ak09916_reset(void) {
   _ak09916_reg_write(AK09916_CNTL_3, 0x01);
-  delay(100);
 }
 
 void Icm20948::_ak09916_reg_write(uint8_t reg, uint8_t val) {
@@ -221,6 +187,7 @@ void Icm20948::_ak09916_reg_write(uint8_t reg, uint8_t val) {
   Wire.write(reg);
   Wire.write(val);
   Wire.endTransmission();
+  delay(10);
 }
 
 uint8_t Icm20948::_ak09916_reg_read(uint8_t reg) {
