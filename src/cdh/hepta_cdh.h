@@ -23,16 +23,8 @@ typedef enum {
   OTHER_ERROR
 } FILE_ERROR;
 
-class HeptaCDH {
+class HeptaCDH : public File, public SDClass {
   public:
-    // For wrapping SD library
-    // Wrapping function with variable length arguments is difficult.
-    FILE_ERROR open_file(const char* file_name);
-
-    // template <typename ... Args>
-    // FILE_ERROR save_data(const char *format, Args const & ... args);
-    // // FILE_ERROR save_data(const char *format, ...);
-    FILE_ERROR close_file();
 
   private:
     const uint8_t _sd_mosi = 1;
@@ -43,11 +35,5 @@ class HeptaCDH {
     File _file;
 };
 
-// template <typename ... Args>
-// FILE_ERROR HeptaCDH::save_data(const char *format, Args const & ... args) {
-//   _file.print(format, args ...);
-
-//   return NO_ERROR;
-// }
 
 #endif /* HEPTA_CDH_H */
