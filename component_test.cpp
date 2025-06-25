@@ -11,16 +11,26 @@
 
 #include "component_test.h"
 
-#include "src/sensor/adc_mcp3208.h"
-#include "src/sensor/camera_c1098.h"
-#include "src/sensor/gps_gp1818mk.h"
-#include "src/sensor/imu9axis_bno055.h"
+#include "src/drv/adc_mcp3208.h"
+#include "src/drv/imu9axis_bno055.h"
+#include "src/drv/gps_gp1818mk.h"
+#include "src/drv/camera_c1098.h"
 
-
+AdcMcp3208 adc;
 Bno055 bno055;
-CameraC1098 cam;
 Gps1818mk gps;
+CameraC1098 cam;
 
+void test_mcp2308(void) {
+  adc.begin(17); // CS pin
+  for(uint8_t i = 0; i < 8; i++) {
+    uint16_t data = adc.get_raw_data(i);
+    Serial.print("Channel ");
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.println(data);
+  }
+}
 
 void test_camera(void) {
   cam.begin(C1098_BAUD_RATE_115200, C1098_JPEG_SIZE_VGA);

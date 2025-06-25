@@ -15,37 +15,30 @@
 
 #include <Arduino.h>
 
-#include "imu9axis_icm20948.h"
-#include "adc_mcp3208.h"
-#include "camera_c1098.h"
+#include "../drv/adc_mcp3208.h"
+#include "../drv/imu9axis_bno055.h"
+#include "../drv/gps_gp1818mk.h"
+#include "../drv/camera_c1098.h"
 
-class HeptaSensor :public Icm20948, public CameraC1098 {
+
+class HeptaSensor :public AdcMcp3208, public Bno055,
+                     public Gps1818mk, public CameraC1098 {
   public:
     HeptaSensor();
+
+    float get_user_pin_voltage(void);
     float get_temperature(void);
 
   private:
-    //resistance
-    const float R1 = 2500.0;
-    const float R2 = 2500.0;
-    const float R3 = 110.0;
-    const float R4 = 1000.0;
-    const float R5 = 68000.0;
-    const float Pt = 100.0;
-    const float R_1 = 3.0;
-    const float R_2 = 2.0;
+    AdcMcp3208 adc;
+    Bno055 bno055;
+    Gps1818mk gps;
+    CameraC1098 cam;
 
-    //current
-    const float I = 0.001;
+    const uint8_t _adc_cs_pin = 17;
+    const uint8_t _temp_pin = 27;
 
-    //voltage
-    const float Vref = 2.5;
-
-    //temperature coefficient
-    const float ce = 0.003851;
-  
-    // pin for A/D
-    int _pin = 14;
+    const uint8_t ADC_USER_PIN = 6;
 };
 
 

@@ -23,8 +23,12 @@ typedef enum {
   OTHER_ERROR
 } FILE_ERROR;
 
+typedef uint8_t cmd_t;
+typedef uint64_t cmd_arg_t;
+
 class HeptaCDH : public File, public SDClass {
   public:
+    int8_t command_execute(cmd_t cmd, cmd_arg_t arg = 0);
 
   private:
     const uint8_t _sd_mosi = 1;
