@@ -1,0 +1,200 @@
+/**
+ * @file camera_c1098.cpp
+ * @author Masaki Naito
+ * @brief 
+ * @version 0.1
+ * @date 2024-08-22
+ * 
+ * @copyright UNISEC all rights reserved.
+ * 
+ */
+
+#include "camera_c1098.h"
+
+#include <SPI.h>
+#include <SD.h>
+
+bool CameraC1098::begin(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size) {
+  bool sync_ok = false;
+  bool init_ok = false;
+  bool packet_set_ok = false;
+
+  if(_is_setup_fin) {
+    return true;
+  }
+
+  CAM_SERIAL.begin(14400);
+
+  delay(10);
+  Serial.println("Sync Start");
+  for(uint8_t i = 0; i < SYNC_TRY_MAX; i++) {
+    if(_sync()) {
+      Serial.println("get ack");
+      delay(10);
+      if(_is_sync_ok()) {
+        _ack();
+        Serial.println("Sync OK");
+        sync_ok = true;
+        break;
+      }
+    }
+  }
+
+  if(sync_ok) {
+    init_ok = _initial(baud_rate, size);
+    // according to the datasheet, delay 50ms is needed
+    delay(50);
+    Serial.println("Init OK");
+  }
+
+  if(init_ok) {
+    CAM_SERIAL.begin(115200);
+    packet_set_ok = _set_package_size(PACKET_LEN);
+    Serial.println("Set Package Size OK");
+  }
+
+  _is_setup_fin = (sync_ok & init_ok & packet_set_ok);
+
+  return _is_setup_fin;
+}
+
+uint32_t CameraC1098::take_picture(void) {
+  if(_snapshot()) {
+    _get_picture();
+    _data_len = _data_length();
+  }
+
+  Serial.print("Data len: ");
+  Serial.println(_data_len);
+
+  return _data_len;
+}
+
+void CameraC1098::save_picture(void) {
+  for(uint32_t i = 0; i < _data_len; i++) {
+    
+  }
+}
+
+bool CameraC1098::_initial(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size) {
+  uint8_t param[MAX_PARAM_NUM] = {0, 0x07, 0x00, 0};
+  param[0] = baud_rate;
+  param[3] = size;
+
+  _send_cmd(C1098_CMD_INITIAL, param);
+
+  // delay needed before reading ack
+  delay(10);
+  return _is_ack_ok();
+}
+
+bool CameraC1098::_sync(void) {
+  uint8_t param[MAX_PARAM_NUM] = {0};
+
+  _send_cmd(C1098_CMD_SYNC, param);
+
+  // delay needed before reading ack
+  delay(10);
+  return _is_ack_ok();
+}
+
+void CameraC1098::_ack(void) {
+  uint8_t param[MAX_PARAM_NUM] = {0};
+
+  _send_cmd(C1098_CMD_ACK, param);
+}
+
+bool CameraC1098::_set_package_size(uint16_t size) {
+  uint8_t param[MAX_PARAM_NUM] = {0x08, 0, 0, 0};
+
+  param[1] = size & 0xFF;
+  param[2] = size >> 8;
+
+  _send_cmd(C1098_CMD_SET_PACKAGE_SIZE, param);
+
+  // delay needed before reading ack
+  delay(10);
+  return _is_ack_ok();
+}
+
+bool CameraC1098::_snapshot(void) {
+  uint8_t param[MAX_PARAM_NUM] = {0};
+
+  _send_cmd(C1098_CMD_SNAPSHOT, param);
+
+  // delay needed before reading ack
+  delay(10);
+  return _is_ack_ok();
+}
+
+bool CameraC1098::_get_picture(void) {
+  uint8_t param[MAX_PARAM_NUM] = {0x01, 0, 0, 0};
+
+  _send_cmd(C1098_CMD_GET_PICTURE, param);
+
+  // delay needed before reading ack
+  delay(10);
+  return _is_ack_ok();
+}
+
+bool CameraC1098::_is_ack_ok(void) {
+  if(!CAM_SERIAL.available()) {
+    Serial.println("serial not available");
+    return false;
+  }
+
+  uint8_t buf[CMD_PACKET_LEN] = {0};
+  for(uint8_t i = 0; i < CMD_PACKET_LEN; i++) {
+    buf[i] = CAM_SERIAL.read();
+  }
+  if(buf[1] == C1098_CMD_ACK) {
+    return true;
+  }
+
+  return false;
+}
+
+bool CameraC1098::_is_sync_ok(void) {
+  if(!CAM_SERIAL.available()) {
+    Serial.println("serial not available");
+    return false;
+  }
+
+  uint8_t buf[CMD_PACKET_LEN] = {0};
+  Serial.println("is_sync_ok");
+  for(uint8_t i = 0; i < CMD_PACKET_LEN; i++) {
+    buf[i] = CAM_SERIAL.read();
+    Serial.print(buf[i], HEX);
+  }
+  if(buf[1] == C1098_CMD_SYNC) {
+    return true;
+  }
+
+  return false;
+}
+
+uint32_t CameraC1098::_data_length(void){
+  // if(!CAM_SERIAL.available()) {
+  //   return false;
+  // }
+
+  uint8_t buf[CMD_PACKET_LEN] = {0};
+  for(uint8_t i = 0; i < CMD_PACKET_LEN; i++) {
+    buf[i] = _get_data();
+  }
+
+  return(buf[2] << 16 | buf[3] << 8 | buf[4]);
+}
+
+void CameraC1098::_send_cmd(C1098_CMD cmd, uint8_t param[]) {
+  CAM_SERIAL.write(CMD_START_BYTE);
+  CAM_SERIAL.write((uint8_t)cmd);
+
+  for(uint8_t i = 0; i < MAX_PARAM_NUM; i++) {
+    CAM_SERIAL.write(param[i]);
+  }
+}
+
+uint8_t CameraC1098::_get_data(void) {
+  return CAM_SERIAL.read();
+}
