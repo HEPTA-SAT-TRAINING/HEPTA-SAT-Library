@@ -16,8 +16,25 @@
 
 class AdcMcp3208 {
   public:
+    /**
+     * @brief Initialize the MCP3208 ADC
+     * @param cs_pin Chip Select pin for SPI communication
+     * @param ref_vol Reference voltage (default is 3.3V)
+     */
     void begin(uint8_t cs_pin, float ref_vol = 3.3);
+
+    /**
+     * @brief Get raw data from a specific channel
+     * @param channel Channel number (0-7)
+     * @return Raw data as a 16-bit unsigned integer
+     */
     uint16_t get_raw_data(uint8_t channel);
+
+    /**
+     * @brief Get the voltage from a specific channel
+     * @param channel Channel number (0-7)
+     * @return Voltage as a float
+     */
     float get_voltage(uint8_t channel);
 
   private:

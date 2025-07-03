@@ -38,18 +38,32 @@ bool CameraC1098::begin(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size) {
         break;
       }
     }
+    if(i >= SYNC_TRY_MAX - 1) {
+      Serial.println("Sync failed");
+      sync_ok = false;
+      return false;
+    }
   }
 
   if(sync_ok) {
     init_ok = _initial(baud_rate, size);
     // according to the datasheet, delay 50ms is needed
     delay(50);
-    Serial.println("Init OK");
+    if(init_ok) {
+      Serial.println("Init OK");
+    } else {
+      Serial.println("Init failed");
+      return false;
+    }
   }
 
   if(init_ok) {
     CAM_SERIAL.begin(115200);
     packet_set_ok = _set_package_size(PACKET_LEN);
+    if(!packet_set_ok) {
+      Serial.println("Set Package Size failed");
+      return false;
+    }
     Serial.println("Set Package Size OK");
   }
 
@@ -139,7 +153,6 @@ bool CameraC1098::_get_picture(void) {
 
 bool CameraC1098::_is_ack_ok(void) {
   if(!CAM_SERIAL.available()) {
-    Serial.println("serial not available");
     return false;
   }
 

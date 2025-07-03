@@ -50,8 +50,25 @@ typedef enum {
 
 class CameraC1098 {
   public:
+
+    /**
+     * @brief Initialize the camera with specified baud rate and JPEG size
+     * @param baud_rate Baud rate for communication
+     * @param size JPEG size to be used
+     * @return true if initialization is successful, false otherwise
+     */
     bool begin(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size);
+
+    /**
+     * @brief Take a picture with the camera
+     * @return The length of the data received from the camera
+     */
     uint32_t take_picture(void);
+
+    /**
+     * @brief Save the picture data to a file
+     * @note This function should be called after take_picture()
+     */
     void save_picture(void);
 
   private:

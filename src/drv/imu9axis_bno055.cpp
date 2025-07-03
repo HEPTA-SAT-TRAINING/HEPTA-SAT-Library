@@ -15,6 +15,11 @@
 void Bno055::begin(void) {
   Wire.begin();
 
+  if(millis() < 750) {
+    while(millis() < 750) {
+      // Wait for 750ms to ensure the sensor is ready
+    }
+  }
   _write_reg(BNO055_OPR_MODE, BNO055_OPR_MODE_NDOF);
 }
 
@@ -82,10 +87,13 @@ void Bno055::print_acc(void) {
 
   Serial.print("ax: ");
   Serial.print(ax);
-  Serial.print(", ay: ");
+  Serial.print(" m/s^2, ");
+  Serial.print("ay: ");
   Serial.print(ay);
-  Serial.print(", az: ");
-  Serial.println(az);
+  Serial.print(" m/s^2, ");
+  Serial.print("az: ");
+  Serial.print(az);
+  Serial.println(" m/s^2");
 }
 
 void Bno055::print_gyro(void) {
@@ -95,10 +103,13 @@ void Bno055::print_gyro(void) {
 
   Serial.print("gx: ");
   Serial.print(gx);
-  Serial.print(", gy: ");
+  Serial.print(" deg/s, ");
+  Serial.print("gy: ");
   Serial.print(gy);
-  Serial.print(", gz: ");
-  Serial.println(gz);
+  Serial.print(" deg/s, ");
+  Serial.print("gz: ");
+  Serial.print(gz);
+  Serial.println(" deg/s");
 }
 
 void Bno055::print_mag(void) {
@@ -108,10 +119,13 @@ void Bno055::print_mag(void) {
 
   Serial.print("mx: ");
   Serial.print(mx);
-  Serial.print(", my: ");
+  Serial.print(" uT, ");
+  Serial.print("my: ");
   Serial.print(my);
-  Serial.print(", mz: ");
-  Serial.println(mz);
+  Serial.print(" uT, ");
+  Serial.print("mz: ");
+  Serial.print(mz);
+  Serial.println(" uT");
 }
 
 

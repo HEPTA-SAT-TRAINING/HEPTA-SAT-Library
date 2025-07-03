@@ -19,13 +19,29 @@
 
 class Gps1818mk {
   public:
+    /**
+     * @brief Read raw data from the GPS module
+     */
     void read_raw(void);
+
+    /**
+     * @brief Get the current position from the GPS module
+     * @param lat Pointer to store latitude
+     * @param lon Pointer to store longitude
+     * @param alt Pointer to store altitude
+     * @return true if position data is successfully retrieved, false otherwise
+     */
     bool get_position(float* lat, float* lon, float* alt);
+
+    /**
+     * @brief Check if new GPS data is available
+     * @return true if data is available, false otherwise
+     */
     bool is_data_available(void);
 
   private:
     char read_byte(void);
-    void wait_serial(void);
+    bool wait_serial(void);
     bool get_header(char array[]);
 };
 

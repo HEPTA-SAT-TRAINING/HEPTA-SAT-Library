@@ -1,17 +1,31 @@
 #include "hepta_com.h"
-#include <stdarg.h>
 
-HeptaCom::HeptaCom(uint16_t baud_rate) {
-  Serial1.begin(baud_rate);
+
+HeptaCom::HeptaCom(uint16_t baud_rate)
+    : XbeeSerial(_rx_pin, _tx_pin) { // Initialize SoftwareSerial with RX and TX pins
+  XbeeSerial.begin(baud_rate);
 }
 
-void HeptaCom::send_text(const char *format, ... ) {
-  char s[100];
-  va_list args;
+char HeptaCom::get_char(void) {
+  return XbeeSerial.read();
+}
 
-  va_start(args, format);
-  vsnprintf(s, 100, format, args);
-  va_end(args);
+void HeptaCom::send_char(const char c) {
+  XbeeSerial.write(c);
+}
 
-  Serial1.write(s);
+void HeptaCom::send_text(String text) {
+  XbeeSerial.print(text);
+}
+
+String HeptaCom::get_text(void) {
+  String received_text = "";
+
+  // Check if data is available to read
+  while (XbeeSerial.available()) {
+    char c = XbeeSerial.read();
+    received_text += c; // Append the character to the string
+  }
+
+  return received_text; // Return the complete string
 }

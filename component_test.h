@@ -14,7 +14,9 @@
 
 #include <Arduino.h>
 
-extern void test_mcp2308(void);
+extern void test_sd(void);
+
+extern void test_mcp3208(void);
 extern void test_bno055(void);
 extern void test_gps(void);
 extern void test_camera(void);

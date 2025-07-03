@@ -13,12 +13,24 @@
 
 #include <Arduino.h>
 
+#include <SoftwareSerial.h>
+
+
 class HeptaCom {
   public:
     HeptaCom(uint16_t baud_rate);
-    uint8_t get_text(void);
-    void send_text(const char *format, ... );
+
+    char get_char(void);
+    void send_char(const char c);
+
+    String get_text(void);
+    void send_text(const String text);
+
   private:
+    const uint8_t _rx_pin = 16; // RX pin for communication
+    const uint8_t _tx_pin = 17; // TX pin for communication
+
+    SoftwareSerial XbeeSerial;
 };
 
 #endif /* HEPTA_COM_H */

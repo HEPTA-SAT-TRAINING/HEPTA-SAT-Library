@@ -22,6 +22,11 @@ void AdcMcp3208::begin(uint8_t cs_pin, float ref_vol) {
 }
 
 uint16_t AdcMcp3208::get_raw_data(uint8_t channel) {
+  if (channel > 7) {
+    Serial.println("Error: Channel must be between 0 and 7.");
+    return 0;
+  }
+
   uint8_t command_high = START_BIT | MODE_SINGLE | ((channel & 0x04) >> 2);
   uint8_t command_low = (channel & 0x03) << 6;
   

@@ -17,24 +17,24 @@ void Gps1818mk::read_raw(void) {
   GPS_SERIAL.begin(9600);
 
   char buf;
-  char buf_old;
-
+  uint8_t timeout = 0;
   while(1) {
     if(GPS_SERIAL.available()) {
-      buf_old = buf;
       buf = GPS_SERIAL.read();
       Serial.print(buf);
-
-      // if((buf_old == 0x0D) && (buf == 0x0A)) {
-      //   Serial.println();
-      //   break;
-      // }
+      timeout++;
+      if(timeout >= UINT8_MAX - 1) {
+        Serial.println("Timeout");
+        break;
+      }
     }
   }
 }
 
 bool Gps1818mk::get_position(float* lat, float* lon, float* alt) {
-  wait_serial();
+  if (!wait_serial()) {
+    return false;
+  }
 
   char gpgga[6] = {'$', 'G', 'P', 'G', 'G', 'A'};
   if(!get_header(gpgga)) {
@@ -108,17 +108,19 @@ char Gps1818mk::read_byte(void) {
   return GPS_SERIAL.read();
 }
 
-void Gps1818mk::wait_serial(void) {
-  for(uint32_t i = 0; i < UINT32_MAX; i++) {
+bool Gps1818mk::wait_serial(void) {
+  for(uint8_t i = 0; i < UINT8_MAX; i++) {
     if(GPS_SERIAL.available()) {
-      break;
+      return true;
     }
-    if(i >= UINT32_MAX - 1) {
+    if(i >= UINT8_MAX - 1) {
       Serial.println("Serial unvailable");
-      return;
+      Serial.println("Please check the GPS connection.");
+      return false;
     }
     delay(1);
   }
+  return false;
 }
 
 bool Gps1818mk::get_header(char array[]) {

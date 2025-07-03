@@ -27,18 +27,59 @@ typedef enum {
   ADC_SAP_VOLTAGE = 5,
 } ADC_PIN_ASSGNMENT;
 
-class HeptaEPS {
+class HeptaEps {
   public:
-    void begin(void);
+    HeptaEps();
 
+    /**
+     * @brief Initialize the EPS
+     */
+    void init(void);
+
+    /**
+     * @brief Switch the 3.3V power on
+     */
     void switch_3V3_on(void);
+
+    /**
+     * @brief Switch the 3.3V power off
+     */
     void switch_3V3_off(void);
 
+    /**
+     * @brief Get the battery voltage
+     * @return Battery line voltage in volts
+     */
     float get_battery_voltage(void);
+
+    /**
+     * @brief Get the 5V voltage
+     * @return 5V line voltage in volts
+     */
     float get_5v_voltage(void);
+
+    /**
+     * @brief Get the 3.3V voltage
+     * @return 3.3V line voltage in volts
+     */
     float get_3v3_voltage(void);
+
+    /**
+     * @brief Get the current discharge
+     * @return Current discharge in amperes
+     */
     float get_current_discharge(void);
+
+    /**
+     * @brief Get the current charge
+     * @return Current charge in amperes
+     */
     float get_current_charge(void);
+
+    /**
+     * @brief Get the SAP voltage
+     * @return SAP line voltage in volts
+     */
     float get_sap_voltage(void);
 
   private:
