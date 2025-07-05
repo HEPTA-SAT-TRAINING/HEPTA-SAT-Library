@@ -69,6 +69,7 @@ void test_bno055(void) {
 
 void test_gps(void) {
   float lat, lon, alt;
+  gps.begin();
   if(gps.get_position(&lat, &lon, &alt)) {
     Serial.println("-------------------");
     Serial.print("Lat: ");

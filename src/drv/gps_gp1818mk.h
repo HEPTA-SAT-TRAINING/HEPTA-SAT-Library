@@ -14,11 +14,15 @@
 #define GPS_1818MK
 
 #include <Arduino.h>
+#include <SoftwareSerial.h>
 
-#define GPS_SERIAL Serial1
 
 class Gps1818mk {
   public:
+    Gps1818mk();
+
+    void begin(void);
+
     /**
      * @brief Read raw data from the GPS module
      */
@@ -40,6 +44,11 @@ class Gps1818mk {
     bool is_data_available(void);
 
   private:
+    const pin_size_t _rx_pin = 13; // RX pin for communication
+    const pin_size_t _tx_pin = -1; // TX pin for communication (not used)
+
+    SoftwareSerial GpsSerial;
+
     char read_byte(void);
     bool wait_serial(void);
     bool get_header(char array[]);

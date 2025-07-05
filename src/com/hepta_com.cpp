@@ -1,8 +1,12 @@
 #include "hepta_com.h"
 
 
-HeptaCom::HeptaCom(uint16_t baud_rate)
+HeptaCom::HeptaCom()
     : XbeeSerial(_rx_pin, _tx_pin) { // Initialize SoftwareSerial with RX and TX pins
+}
+
+void HeptaCom::begin(uint16_t baud_rate) {
+  // Start the SoftwareSerial communication at the specified baud rate
   XbeeSerial.begin(baud_rate);
 }
 

@@ -11,16 +11,21 @@
 
 #include "gps_gp1818mk.h"
 
-#include <string.h>
+
+Gps1818mk::Gps1818mk()
+  : GpsSerial(_rx_pin, _tx_pin) {
+}
+
+void Gps1818mk::begin(void) {
+  GpsSerial.begin(9600);
+}
 
 void Gps1818mk::read_raw(void) {
-  GPS_SERIAL.begin(9600);
-
   char buf;
   uint8_t timeout = 0;
   while(1) {
-    if(GPS_SERIAL.available()) {
-      buf = GPS_SERIAL.read();
+    if(GpsSerial.available()) {
+      buf = GpsSerial.read();
       Serial.print(buf);
       timeout++;
       if(timeout >= UINT8_MAX - 1) {
@@ -97,7 +102,7 @@ bool Gps1818mk::get_position(float* lat, float* lon, float* alt) {
 
 char Gps1818mk::read_byte(void) {
   for(uint32_t i = 0; i < UINT32_MAX; i++) {
-    if(GPS_SERIAL.available()) {
+    if(GpsSerial.available()) {
       break;
     }
     if(i >= UINT32_MAX - 1) {
@@ -105,12 +110,12 @@ char Gps1818mk::read_byte(void) {
       return 0;
     }
   }
-  return GPS_SERIAL.read();
+  return GpsSerial.read();
 }
 
 bool Gps1818mk::wait_serial(void) {
   for(uint8_t i = 0; i < UINT8_MAX; i++) {
-    if(GPS_SERIAL.available()) {
+    if(GpsSerial.available()) {
       return true;
     }
     if(i >= UINT8_MAX - 1) {
@@ -149,5 +154,5 @@ bool Gps1818mk::get_header(char array[]) {
 }
 
 bool Gps1818mk::is_data_available(void) {
-  return GPS_SERIAL.available();
+  return GpsSerial.available();
 }

@@ -18,8 +18,9 @@
 
 class HeptaCom {
   public:
-    HeptaCom(uint16_t baud_rate);
+    HeptaCom();
 
+    void begin(uint16_t baud_rate);
     char get_char(void);
     void send_char(const char c);
 
