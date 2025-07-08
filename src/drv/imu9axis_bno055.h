@@ -47,7 +47,7 @@ class Bno055 {
     void _write_reg(uint8_t reg, uint8_t value);
     uint8_t _read_reg(uint8_t reg);
 
-    const uint8_t I2C_ADDR_BNO055 = 0x29;
+    const uint8_t I2C_ADDR_BNO055 = 0x28;
     const uint8_t BNO055_OPR_MODE_NDOF = 0x0C; // NDOF mode for 9-axis fusion
 
     typedef enum {

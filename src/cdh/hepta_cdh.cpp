@@ -11,6 +11,11 @@
 
 #include "hepta_cdh.h"
 
+void HeptaCdh::begin(void) {
+  SPI.begin(); // Initialize SPI
+  Serial.println("SD Card initialized successfully.");
+}
+
 cmd_t HeptaCdh::get_command(void) {
   cmd_t cmd = 0;
 

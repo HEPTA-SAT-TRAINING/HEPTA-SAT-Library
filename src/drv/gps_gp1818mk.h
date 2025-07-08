@@ -5,7 +5,6 @@
  * @version 0.1
  * @date 2025-02-26
  * 
- * @copyright UNISEC all rights reserved.
  * 
  */
 
@@ -16,40 +15,21 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
-
 class Gps1818mk {
   public:
-    Gps1818mk();
-
     void begin(void);
-
-    /**
-     * @brief Read raw data from the GPS module
-     */
     void read_raw(void);
-
-    /**
-     * @brief Get the current position from the GPS module
-     * @param lat Pointer to store latitude
-     * @param lon Pointer to store longitude
-     * @param alt Pointer to store altitude
-     * @return true if position data is successfully retrieved, false otherwise
-     */
     bool get_position(float* lat, float* lon, float* alt);
-
-    /**
-     * @brief Check if new GPS data is available
-     * @return true if data is available, false otherwise
-     */
+    bool get_velocity(float* velocity, float* heading);
+    bool get_all(float* lat, float* lon, float* alt, float* velocity, float* heading);
     bool is_data_available(void);
+    void test_gps(void);
 
   private:
     const pin_size_t _rx_pin = 13; // RX pin for communication
     const pin_size_t _tx_pin = -1; // TX pin for communication (not used)
-
-    SoftwareSerial GpsSerial;
-
-    char read_byte(void);
+    SoftwareSerial* _serial = nullptr; // SoftwareSerialインスタンスへのポインタ
+    int read_byte(void); // 返り値型をintに修正
     bool wait_serial(void);
     bool get_header(char array[]);
 };

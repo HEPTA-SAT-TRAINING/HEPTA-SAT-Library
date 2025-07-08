@@ -6,6 +6,7 @@ HeptaCdh cdh;
 void setup() {
   Serial.begin(9600);
   Serial1.begin(9600);
+  cdh.begin(); // Initialize the command and data handling system
 }
 
 void loop() {

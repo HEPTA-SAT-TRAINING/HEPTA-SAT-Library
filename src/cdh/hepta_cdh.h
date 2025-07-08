@@ -12,7 +12,9 @@
 #ifndef HEPTA_CDH_H
 #define HEPTA_CDH_H
 
+#include <Arduino.h>
 #include <SD.h>
+#include <SPI.h>
 
 typedef uint8_t cmd_t;
 typedef uint64_t cmd_arg_t; // not yet used, but reserved for future use
@@ -20,11 +22,12 @@ typedef uint64_t cmd_arg_t; // not yet used, but reserved for future use
 
 class HeptaCdh :public SDClass {
   public:
+    void begin(void);
     cmd_t get_command(void);
     int8_t command_execute(cmd_t cmd, cmd_arg_t arg = 0);
 
   private:
-    const uint8_t _sd_cs_pin = 17;
+    const uint8_t _sd_cs_pin = 3;
 };
 
 

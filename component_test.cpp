@@ -25,7 +25,6 @@ Gps1818mk gps;
 CameraC1098 cam;
 
 void test_sd(void) {
-  // BBM検証用．PCBで検証するときは変える
   if (!SD.begin(17)) {
     Serial.println("SD Card initialization failed!");
     return;
@@ -70,6 +69,7 @@ void test_bno055(void) {
 void test_gps(void) {
   float lat, lon, alt;
   gps.begin();
+  // gps.read_raw();
   if(gps.get_position(&lat, &lon, &alt)) {
     Serial.println("-------------------");
     Serial.print("Lat: ");
