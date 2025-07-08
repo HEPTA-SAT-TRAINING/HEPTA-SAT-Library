@@ -21,14 +21,14 @@ void Gps1818mk::begin(void) {
 
 void Gps1818mk::read_raw(void) {
   char buf;
-  uint8_t timeout = 0;
+  uint16_t timeout = 0;
   while(1) {
     timeout++;
     if(_serial && _serial->available()) {
       buf = _serial->read();
       Serial.print(buf);
     }
-    if(timeout >= UINT8_MAX - 1) {
+    if(timeout >= UINT16_MAX - 1) {
       Serial.println("Timeout");
       break;
     }
@@ -194,11 +194,11 @@ int Gps1818mk::read_byte(void) {
 }
 
 bool Gps1818mk::wait_serial(void) {
-  for(uint8_t i = 0; i < UINT8_MAX; i++) {
+  for(uint16_t i = 0; i < UINT16_MAX; i++) {
     if(_serial && _serial->available()) {
       return true;
     }
-    if(i >= UINT8_MAX - 1) {
+    if(i >= UINT16_MAX - 1) {
       Serial.println("Serial unvailable");
       Serial.println("Please check the GPS connection.");
       return false;

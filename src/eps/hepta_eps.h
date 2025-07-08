@@ -29,7 +29,7 @@ typedef enum {
 
 class HeptaEps {
   public:
-    HeptaEps();
+    // HeptaEps();
 
     /**
      * @brief Initialize the EPS

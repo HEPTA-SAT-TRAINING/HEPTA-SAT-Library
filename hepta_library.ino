@@ -1,7 +1,9 @@
 #include "component_test.h"
 #include "src/cdh/hepta_cdh.h"
+#include "src/eps/hepta_eps.h"
 
 HeptaCdh cdh;
+HeptaEps eps;
 
 void setup() {
   Serial.begin(9600);
@@ -39,6 +41,25 @@ void loop() {
     case 5: // Camera C1098 test
       Serial.println("Camera C1098 Test");
       test_camera();
+      break;
+
+    case 10:
+      eps.init();
+      break;
+
+    case 11: // Switch 3.3V on
+      Serial.println("Switching 3.3V on");
+      eps.switch_3V3_on();
+      break;
+
+    case 12: // Switch 3.3V off
+      Serial.println("Switching 3.3V off");
+      eps.switch_3V3_off();
+      break;
+
+    case 13:
+      Serial.print("Battery Voltage: ");
+      Serial.println(eps.get_battery_voltage());
       break;
 
     case 99:

@@ -25,22 +25,19 @@ Gps1818mk gps;
 CameraC1098 cam;
 
 void test_sd(void) {
-  if (!SD.begin(17)) {
-    Serial.println("SD Card initialization failed!");
+  SD.begin(17);
+
+  // Create a new file with the generated name
+  File file = SD.open("test.txt", FILE_WRITE);
+  if (!file) {
+    Serial.println("Failed to create file.");
     return;
   }
 
-  Serial.println("SD Card initialized successfully.");
-
-  File root = SD.open("/");
-  if (!root) {
-    Serial.println("Failed to open root directory.");
-    return;
-  }
-
-  root.close();
+  file.write("Hello, this is a test file.\n");
+  file.close();
+  Serial.println("File created successfully.");
 }
-
 
 void test_mcp3208(void) {
   adc.begin(17); // CS pin

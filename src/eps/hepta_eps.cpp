@@ -12,12 +12,12 @@
 
 #include "hepta_eps.h"
 
-HeptaEps::HeptaEps() {
-  adc.begin(_adc_cs_pin); // Initialize ADC with CS pin 17
-  pinMode(_sw_3v3_pin, OUTPUT);
-  digitalWrite(_sw_3v3_pin, LOW); // Ensure 3.3V switch is off initially
-  pinMode(_bat_vol_pin, INPUT);
-}
+// HeptaEps::HeptaEps() {
+//   adc.begin(_adc_cs_pin); // Initialize ADC with CS pin 17
+//   pinMode(_sw_3v3_pin, OUTPUT);
+//   digitalWrite(_sw_3v3_pin, LOW); // Ensure 3.3V switch is off initially
+//   pinMode(_bat_vol_pin, INPUT);
+// }
 
 void HeptaEps::init(void) {
   adc.begin(_adc_cs_pin); // Initialize ADC with CS pin 17
