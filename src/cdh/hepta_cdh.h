@@ -24,7 +24,7 @@ class HeptaCdh :public SDClass {
   public:
     void begin(void);
     cmd_t get_command(void);
-    int8_t command_execute(cmd_t cmd, cmd_arg_t arg = 0);
+    bool command_execute(cmd_t cmd, cmd_arg_t arg = 0);
 
   private:
     const uint8_t _sd_cs_pin = 3;

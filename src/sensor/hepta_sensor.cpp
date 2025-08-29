@@ -11,10 +11,42 @@
 
 #include "hepta_sensor.h"
 
+#include <SD.h>
+#include <SPI.h>
+
 HeptaSensor::HeptaSensor() {
   adc.begin(_adc_cs_pin);
+  analogReadResolution(12);
   pinMode(_temp_pin, INPUT);
+}
 
+bool HeptaSensor::save_picture(void) {
+  if (cam.begin(C1098_BAUD_RATE_115200, C1098_JPEG_SIZE_VGA)) {
+    uint32_t data_len = cam.take_picture();
+    if (data_len > 0) {
+      File file = SD.open("picture.jpg", FILE_WRITE);
+      if (file) {
+        uint8_t buf[512];
+        uint32_t total_written = 0;
+        while (true) {
+          int read_size = cam.get_image_data_packet(buf, sizeof(buf));
+          if (read_size <= 0) break;
+          file.write(buf, read_size);
+          total_written += read_size;
+        }
+        file.close();
+        Serial.print("Picture saved successfully. Total bytes: ");
+        Serial.println(total_written);
+        return true;
+      } else {
+        Serial.println("Failed to open file for writing.");
+      }
+    } else {
+      Serial.println("No picture data available.");
+    }
+    return true;
+  }
+  return false;
 }
 
 float HeptaSensor::get_temperature(void) {

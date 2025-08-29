@@ -65,11 +65,16 @@ class CameraC1098 {
      */
     uint32_t take_picture(void);
 
+    
+    uint16_t get_packet_size(void);
+  
     /**
-     * @brief Save the picture data to a file
-     * @note This function should be called after take_picture()
+     * @brief パケット単位で画像データを取得する
+     * @param buf 受信バッファ
+     * @param max_size バッファサイズ
+     * @return 実際に受信したバイト数（最後のパケットは512未満になる場合あり、0ならデータ終了）
      */
-    void save_picture(void);
+    int get_image_data_packet(uint8_t *buf, size_t max_size);
 
   private:
     const uint16_t PACKET_LEN = 512;
@@ -78,15 +83,16 @@ class CameraC1098 {
 
     // command
     bool _initial(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size);
-    bool _sync(void);
-    void _ack(void);
-    bool _set_package_size(uint16_t size);
-    bool _snapshot(void);
     bool _get_picture(void);
+    bool _snapshot(void);
+    bool _set_package_size(uint16_t size);
+    bool _reset(void);
+    uint32_t _data_length(void);
+    bool _sync(void);
+    void _send_ack(void); 
 
     bool _is_ack_ok(void);
     bool _is_sync_ok(void);
-    uint32_t _data_length(void);
 
     void _send_cmd(C1098_CMD cmd, uint8_t param[]);
     uint8_t _get_data(void);

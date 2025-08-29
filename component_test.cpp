@@ -25,7 +25,7 @@ Gps1818mk gps;
 CameraC1098 cam;
 
 void test_sd(void) {
-  SD.begin(17);
+  SD.begin(3);
 
   // Create a new file with the generated name
   File file = SD.open("test.txt", FILE_WRITE);

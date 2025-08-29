@@ -1,13 +1,11 @@
-#include "component_test.h"
 #include "src/cdh/hepta_cdh.h"
 #include "src/eps/hepta_eps.h"
+#include "component_test.h"
 
 HeptaCdh cdh;
 HeptaEps eps;
 
 void setup() {
-  Serial.begin(9600);
-  Serial1.begin(9600);
   cdh.begin(); // Initialize the command and data handling system
 }
 
@@ -15,8 +13,8 @@ void loop() {
   cmd_t cmd = cdh.get_command();
 
   switch (cmd) {
-    case 0:
-      break; // No command, do nothing
+    case 0: // No command
+      break;
 
     case 1: // SD card test
       Serial.println("SD Card Test");
@@ -75,5 +73,6 @@ void loop() {
       Serial.println("Unknown command");
       break;
   }
+
   delay(1000);
 }

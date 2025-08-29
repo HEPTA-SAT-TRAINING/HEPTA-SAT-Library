@@ -13,14 +13,16 @@
 #include <Wire.h>
 
 void Bno055::begin(void) {
-  Wire.begin();
-
   if(millis() < 750) {
     while(millis() < 750) {
       // Wait for 750ms to ensure the sensor is ready
     }
   }
+
+  Wire.begin();
   _write_reg(BNO055_OPR_MODE, BNO055_OPR_MODE_NDOF);
+
+  delay(10);
 }
 
 void Bno055::sen_acc(float *ax, float *ay, float *az) {

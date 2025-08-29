@@ -13,6 +13,8 @@
 
 void HeptaCdh::begin(void) {
   SPI.begin(); // Initialize SPI
+  Serial.begin(9600);
+  Serial1.begin(9600);
   Serial.println("SD Card initialized successfully.");
 }
 
@@ -33,4 +35,9 @@ cmd_t HeptaCdh::get_command(void) {
   }
 
   return cmd; // Return the received command
+}
+
+bool HeptaCdh::command_execute(cmd_t cmd, cmd_arg_t arg) {
+
+  return true; // Return 0 to indicate success
 }

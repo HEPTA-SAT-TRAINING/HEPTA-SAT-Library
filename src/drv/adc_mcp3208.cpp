@@ -19,6 +19,7 @@
 void AdcMcp3208::begin(uint8_t cs_pin, float ref_vol) {
   _cs_pin = cs_pin;
   _ref_voltage = ref_vol;
+  pinMode(_cs_pin, OUTPUT);
 }
 
 uint16_t AdcMcp3208::get_raw_data(uint8_t channel) {

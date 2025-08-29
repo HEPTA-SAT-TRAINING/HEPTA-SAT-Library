@@ -26,6 +26,8 @@ class HeptaSensor :public AdcMcp3208, public Bno055,
   public:
     HeptaSensor();
 
+    bool save_picture(void);
+
     float get_user_pin_voltage(void);
     float get_temperature(void);
 

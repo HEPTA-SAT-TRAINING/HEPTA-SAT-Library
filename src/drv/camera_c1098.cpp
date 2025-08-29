@@ -14,13 +14,14 @@
 #include <SPI.h>
 #include <SD.h>
 
+
 bool CameraC1098::begin(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size) {
   bool sync_ok = false;
   bool init_ok = false;
   bool packet_set_ok = false;
 
   if(_is_setup_fin) {
-    return true;
+    return _reset();
   }
 
   CAM_SERIAL.begin(14400);
@@ -32,7 +33,7 @@ bool CameraC1098::begin(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size) {
       Serial.println("get ack");
       delay(10);
       if(_is_sync_ok()) {
-        _ack();
+        _send_ack();
         Serial.println("Sync OK");
         sync_ok = true;
         break;
@@ -73,22 +74,56 @@ bool CameraC1098::begin(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size) {
 }
 
 uint32_t CameraC1098::take_picture(void) {
-  if(_snapshot()) {
-    _get_picture();
-    _data_len = _data_length();
+  if(!_snapshot()) {
+    Serial.println("Snapshot failed");
+    return 0;
   }
+  Serial.println("Snapshot OK");
 
+  if(!_get_picture()) {
+    Serial.println("Get Picture failed");
+    return 0;
+  }
+  Serial.println("Get Picture OK");
+
+  _data_len = _data_length(); // メンバ変数に保存
   Serial.print("Data len: ");
   Serial.println(_data_len);
 
   return _data_len;
 }
 
-void CameraC1098::save_picture(void) {
-  for(uint32_t i = 0; i < _data_len; i++) {
-    
-  }
+uint16_t CameraC1098::get_packet_size(void) {
+  return PACKET_LEN;
 }
+
+// パケット単位で画像データを取得し、実際に受信したバイト数を返す
+int CameraC1098::get_image_data_packet(uint8_t *buf, size_t max_size) {
+  if (_data_len == 0) {
+    Serial.println("No more data");
+    return 0;
+  }
+  uint16_t packet_size = (_data_len < PACKET_LEN) ? _data_len : PACKET_LEN;
+  if (max_size < packet_size) {
+    Serial.println("Buffer size is too small");
+    return -1;
+  }
+
+  _send_ack();
+  for (uint16_t i = 0; i < packet_size; i++) {
+    if (!CAM_SERIAL.available()) {
+      Serial.println("No data available");
+      return i; // ここまで受信できたバイト数を返す
+    }
+    buf[i] = _get_data();
+  }
+  _data_len -= packet_size;
+  return packet_size;
+}
+
+/* ---------------------------------------------------------------
+  Private functions
+--------------------------------------------------------------- */
 
 bool CameraC1098::_initial(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size) {
   uint8_t param[MAX_PARAM_NUM] = {0, 0x07, 0x00, 0};
@@ -102,29 +137,10 @@ bool CameraC1098::_initial(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size) {
   return _is_ack_ok();
 }
 
-bool CameraC1098::_sync(void) {
-  uint8_t param[MAX_PARAM_NUM] = {0};
+bool CameraC1098::_get_picture(void) {
+  uint8_t param[MAX_PARAM_NUM] = {0x01, 0, 0, 0};
 
-  _send_cmd(C1098_CMD_SYNC, param);
-
-  // delay needed before reading ack
-  delay(10);
-  return _is_ack_ok();
-}
-
-void CameraC1098::_ack(void) {
-  uint8_t param[MAX_PARAM_NUM] = {0};
-
-  _send_cmd(C1098_CMD_ACK, param);
-}
-
-bool CameraC1098::_set_package_size(uint16_t size) {
-  uint8_t param[MAX_PARAM_NUM] = {0x08, 0, 0, 0};
-
-  param[1] = size & 0xFF;
-  param[2] = size >> 8;
-
-  _send_cmd(C1098_CMD_SET_PACKAGE_SIZE, param);
+  _send_cmd(C1098_CMD_GET_PICTURE, param);
 
   // delay needed before reading ack
   delay(10);
@@ -141,14 +157,62 @@ bool CameraC1098::_snapshot(void) {
   return _is_ack_ok();
 }
 
-bool CameraC1098::_get_picture(void) {
-  uint8_t param[MAX_PARAM_NUM] = {0x01, 0, 0, 0};
+bool CameraC1098::_set_package_size(uint16_t size) {
+  uint8_t param[MAX_PARAM_NUM] = {0x08, 0, 0, 0};
 
-  _send_cmd(C1098_CMD_GET_PICTURE, param);
+  param[1] = size & 0xFF;
+  param[2] = size >> 8;
+
+  _send_cmd(C1098_CMD_SET_PACKAGE_SIZE, param);
 
   // delay needed before reading ack
   delay(10);
   return _is_ack_ok();
+}
+
+bool CameraC1098::_reset(void) {
+  uint8_t param[MAX_PARAM_NUM] = {0};
+
+  _send_cmd(C1098_CMD_RESET, param);
+
+  // delay needed before reading ack
+  delay(20);
+  if(!_is_ack_ok()) {
+    Serial.println("Reset failed");
+    return false;
+  } else {
+    Serial.println("Reset OK");
+    return true;
+  }
+}
+
+uint32_t CameraC1098::_data_length(void){
+  // if(!CAM_SERIAL.available()) {
+  //   return false;
+  // }
+
+  uint8_t buf[CMD_PACKET_LEN] = {0};
+  for(uint8_t i = 0; i < CMD_PACKET_LEN; i++) {
+    buf[i] = _get_data();
+  }
+
+  return(buf[2] << 16 | buf[3] << 8 | buf[4]);
+}
+
+bool CameraC1098::_sync(void) {
+  uint8_t param[MAX_PARAM_NUM] = {0};
+
+  _send_cmd(C1098_CMD_SYNC, param);
+
+  // delay needed before reading ack
+  delay(10);
+  return _is_ack_ok();
+}
+
+void CameraC1098::_send_ack(void) {
+  uint8_t param[MAX_PARAM_NUM] = {0};
+
+  _send_cmd(C1098_CMD_ACK, param);
 }
 
 bool CameraC1098::_is_ack_ok(void) {
@@ -186,18 +250,6 @@ bool CameraC1098::_is_sync_ok(void) {
   return false;
 }
 
-uint32_t CameraC1098::_data_length(void){
-  // if(!CAM_SERIAL.available()) {
-  //   return false;
-  // }
-
-  uint8_t buf[CMD_PACKET_LEN] = {0};
-  for(uint8_t i = 0; i < CMD_PACKET_LEN; i++) {
-    buf[i] = _get_data();
-  }
-
-  return(buf[2] << 16 | buf[3] << 8 | buf[4]);
-}
 
 void CameraC1098::_send_cmd(C1098_CMD cmd, uint8_t param[]) {
   CAM_SERIAL.write(CMD_START_BYTE);

@@ -198,7 +198,7 @@ bool Gps1818mk::wait_serial(void) {
     if(_serial && _serial->available()) {
       return true;
     }
-    if(i >= UINT16_MAX - 1) {
+    if(i >= 1000) {
       Serial.println("Serial unvailable");
       Serial.println("Please check the GPS connection.");
       return false;
