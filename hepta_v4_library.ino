@@ -60,6 +60,11 @@ void loop() {
       Serial.println(eps.get_battery_voltage());
       break;
 
+    case 14:
+      Serial.println("Motor Test: ");
+      test_motor();
+      break;
+
     case 99:
       Serial.println("All components test");
       test_sd();
@@ -67,6 +72,7 @@ void loop() {
       test_bno055();
       test_gps();
       test_camera();
+      // test_motor(); // Not always included
       break;
 
     default:
