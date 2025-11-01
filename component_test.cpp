@@ -91,11 +91,11 @@ void test_motor(void) {
 
   // current mode
   motor.setMode(ROLLER_MODE_ENCODER);
-  motor.setCurrent(120000);
+  motor.setCurrent(100000);
   motor.setOutput(1);
   Serial.printf("current: %d\n", motor.getCurrent());
   delay(100);
-  Serial.printf("actualCurrent: %d\n", motor.getCurrentReadback() / 100.0f);
+  Serial.printf("actualCurrent: %f\n", motor.getCurrentReadback() / 100.0f);
   delay(2000);
 
   // position mode
@@ -109,25 +109,25 @@ void test_motor(void) {
   delay(100);
   Serial.printf("pos: %d\n", motor.getPos());
   delay(100);
-  Serial.printf("posMaxCurrent: %d\n", motor.getPosMaxCurrent() / 100.0f);
+  Serial.printf("posMaxCurrent: %f\n", motor.getPosMaxCurrent() / 100.0f);
   delay(100);
-  Serial.printf("actualPos: %d\n", motor.getPosReadback() / 100.f);
+  Serial.printf("actualPos: %f\n", motor.getPosReadback() / 100.0f);
   delay(2000);
 
   // speed mode
   motor.setOutput(0);
   motor.setMode(ROLLER_MODE_SPEED);
-  motor.setSpeed(2100000000);
-  motor.setSpeedMaxCurrent(120000);
+  motor.setSpeed(700 * 100);
+  motor.setSpeedMaxCurrent(100000);
   motor.setOutput(1);
   motor.getSpeedPID(&p, &i, &d);
   Serial.printf("SpeedPID  P: %3.8f  I: %3.8f  D: %3.8f\n", p / 100000.0, i / 10000000.0, d / 100000.0);
   delay(100);
   Serial.printf("speed: %d\n", motor.getSpeed());
   delay(100);
-  Serial.printf("speedMaxCurrent: %d\n", motor.getSpeedMaxCurrent() / 100.0f);
+  Serial.printf("speedMaxCurrent: %f\n", motor.getSpeedMaxCurrent() / 100.0f);
   delay(100);
-  Serial.printf("actualSpeed: %d\n", motor.getSpeedReadback() / 100.0f);
+  Serial.printf("actualSpeed: %f\n", motor.getSpeedReadback() / 100.0f);
   delay(2000);
 
   // encoder mode
@@ -136,7 +136,7 @@ void test_motor(void) {
   motor.setDialCounter(240000);
   motor.setOutput(1);
   Serial.printf("DialCounter:%d\n", motor.getDialCounter());
-  delay(5000);
+  delay(2000);
   Serial.printf("temp:%d\n", motor.getTemp());
   delay(100);
   Serial.printf("Vin:%3.2f\n", motor.getVin() / 100.0);
