@@ -13,8 +13,9 @@
 #define COMPONENT_TEST_H
 
 #include <Arduino.h>
+#include "src/cdh/hepta_cdh.h"
 
-extern void test_sd(void);
+extern void test_sd(HeptaCdh &cdh);
 
 extern void test_mcp3208(void);
 extern void test_bno055(void);

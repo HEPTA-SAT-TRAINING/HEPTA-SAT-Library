@@ -12,10 +12,85 @@
 #include "hepta_cdh.h"
 
 void HeptaCdh::begin(void) {
-  SPI.begin(); // Initialize SPI
   Serial.begin(9600);
   Serial1.begin(9600);
-  Serial.println("SD Card initialized successfully.");
+
+  if (sd_begin(_sd_cs_pin)) {
+    Serial.println("SD Card initialized successfully.");
+  } else {
+    Serial.println("SD Card initialization failed.");
+  }
+}
+
+bool HeptaCdh::sd_begin(uint8_t cs_pin) {
+  _sd_cs_pin = cs_pin;
+  SPI.begin();
+  _sd_initialized = SD.begin(_sd_cs_pin);
+  return _sd_initialized;
+}
+
+bool HeptaCdh::sd_is_available(void) const {
+  return _sd_initialized;
+}
+
+File HeptaCdh::open_file(const char *path, int mode) {
+  if (!_sd_initialized && !sd_begin(_sd_cs_pin)) {
+    return File();
+  }
+
+  return SD.open(path, mode);
+}
+
+File HeptaCdh::create_file(const char *path) {
+  return open_file(path, FILE_WRITE);
+}
+
+bool HeptaCdh::file_exists(const char *path) {
+  if (!_sd_initialized && !sd_begin(_sd_cs_pin)) {
+    return false;
+  }
+
+  return SD.exists(path);
+}
+
+bool HeptaCdh::remove_file(const char *path) {
+  if (!_sd_initialized && !sd_begin(_sd_cs_pin)) {
+    return false;
+  }
+
+  return SD.remove(path);
+}
+
+size_t HeptaCdh::write_file(File &file, const char *text) {
+  if (!file || text == NULL) {
+    return 0;
+  }
+
+  return file.print(text);
+}
+
+size_t HeptaCdh::write_file(File &file, const uint8_t *buffer, size_t size) {
+  if (!file || buffer == NULL) {
+    return 0;
+  }
+
+  return file.write(buffer, size);
+}
+
+int HeptaCdh::read_file(File &file) {
+  if (!file) {
+    return -1;
+  }
+
+  return file.read();
+}
+
+int HeptaCdh::read_file(File &file, uint8_t *buffer, size_t size) {
+  if (!file || buffer == NULL) {
+    return -1;
+  }
+
+  return file.read(buffer, size);
 }
 
 cmd_t HeptaCdh::get_command(void) {

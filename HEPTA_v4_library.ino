@@ -18,7 +18,7 @@ void loop() {
 
     case 1: // SD card test
       Serial.println("SD Card Test");
-      test_sd();
+      test_sd(cdh);
       break;
 
     case 2: // MCP3208 test
@@ -45,16 +45,6 @@ void loop() {
       eps.init();
       break;
 
-    case 11: // Switch 3.3V on
-      Serial.println("Switching 3.3V on");
-      eps.switch_3V3_on();
-      break;
-
-    case 12: // Switch 3.3V off
-      Serial.println("Switching 3.3V off");
-      eps.switch_3V3_off();
-      break;
-
     case 13:
       Serial.print("Battery Voltage: ");
       Serial.println(eps.get_battery_voltage());
@@ -67,7 +57,7 @@ void loop() {
 
     case 99:
       Serial.println("All components test");
-      test_sd();
+      test_sd(cdh);
       test_mcp3208();
       test_bno055();
       test_gps();

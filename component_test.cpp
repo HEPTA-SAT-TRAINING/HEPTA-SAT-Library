@@ -11,9 +11,6 @@
 
 #include "component_test.h"
 
-#include <SD.h>
-#include <SPI.h>
-
 #include "src/drv/adc_mcp3208.h"
 #include "src/drv/imu9axis_bno055.h"
 #include "src/drv/gps_gp1818mk.h"
@@ -27,19 +24,28 @@ Gps1818mk gps;
 CameraC1098 cam;
 UnitRollerI2C motor;
 
-void test_sd(void) {
-  SD.begin(3);
-
-  // Create a new file with the generated name
-  File file = SD.open("test.txt", FILE_WRITE);
+void test_sd(HeptaCdh &cdh) {
+  File file = cdh.create_file("test.txt");
   if (!file) {
     Serial.println("Failed to create file.");
     return;
   }
 
-  file.write("Hello, this is a test file.\n");
+  cdh.write_file(file, "Hello, this is a test file.\n");
   file.close();
   Serial.println("File created successfully.");
+
+  file = cdh.open_file("test.txt");
+  if (!file) {
+    Serial.println("Failed to open file.");
+    return;
+  }
+
+  Serial.println("File content:");
+  while (file.available()) {
+    Serial.write(cdh.read_file(file));
+  }
+  file.close();
 }
 
 void test_mcp3208(void) {

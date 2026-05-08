@@ -11,12 +11,9 @@
 
 #include "hepta_sensor.h"
 
-HeptaSensor::HeptaSensor() {
+bool HeptaSensor::begin(void) {
   analogReadResolution(12);
   pinMode(_temp_pin, INPUT);
-}
-
-bool HeptaSensor::begin(void) {
   bno055.begin();
   return true;
 }

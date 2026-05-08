@@ -19,8 +19,6 @@
 
 class HeptaSensor {
   public:
-    HeptaSensor();
-
     bool begin(void);
     float get_temperature(void);
     void get_acceleration(float *ax, float *ay, float *az);

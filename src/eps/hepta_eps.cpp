@@ -13,17 +13,7 @@
 #include "hepta_eps.h"
 
 void HeptaEps::init(void) {
-  pinMode(_sw_3v3_pin, OUTPUT);
-  digitalWrite(_sw_3v3_pin, LOW); // Ensure 3.3V switch is off initially
   pinMode(_bat_vol_pin, INPUT);
-}
-
-void HeptaEps::switch_3V3_on(void) {
-  digitalWrite(_sw_3v3_pin, HIGH);
-}
-
-void HeptaEps::switch_3V3_off(void) {
-  digitalWrite(_sw_3v3_pin, LOW);
 }
 
 float HeptaEps::get_battery_voltage(void) {
