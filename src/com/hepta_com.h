@@ -28,8 +28,8 @@ class HeptaCom {
     void send_text(const String text);
 
   private:
-    const uint8_t _rx_pin = 16; // RX pin for communication
-    const uint8_t _tx_pin = 17; // TX pin for communication
+    const uint8_t _rx_pin = 15; // RX pin for communication
+    const uint8_t _tx_pin = 14; // TX pin for communication
 
     SoftwareSerial XbeeSerial;
 };

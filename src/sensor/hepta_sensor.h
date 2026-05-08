@@ -15,32 +15,25 @@
 
 #include <Arduino.h>
 
-#include "../drv/adc_mcp3208.h"
 #include "../drv/imu9axis_bno055.h"
-#include "../drv/gps_gp1818mk.h"
-#include "../drv/camera_c1098.h"
 
-
-class HeptaSensor :public AdcMcp3208, public Bno055,
-                     public Gps1818mk, public CameraC1098 {
+class HeptaSensor {
   public:
     HeptaSensor();
 
-    bool save_picture(void);
-
-    float get_user_pin_voltage(void);
+    bool begin(void);
     float get_temperature(void);
+    void get_acceleration(float *ax, float *ay, float *az);
+    void get_gyro(float *gx, float *gy, float *gz);
+    void get_magnetometer(float *mx, float *my, float *mz);
+    void print_acceleration(void);
+    void print_gyro(void);
+    void print_magnetometer(void);
 
   private:
-    AdcMcp3208 adc;
     Bno055 bno055;
-    Gps1818mk gps;
-    CameraC1098 cam;
 
-    const uint8_t _adc_cs_pin = 17;
-    const uint8_t _temp_pin = 27;
-
-    const uint8_t ADC_USER_PIN = 6;
+    const uint8_t _temp_pin = 13;
 };
 
 
