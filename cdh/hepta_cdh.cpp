@@ -13,19 +13,27 @@
 
 void HeptaCdh::begin(void) {
   Serial.begin(9600);
+  while (!Serial && millis() < 3000);
   Serial1.begin(9600);
 
-  if (sd_begin(_sd_cs_pin)) {
+  if (sd_begin()) {
     Serial.println("SD Card initialized successfully.");
   } else {
     Serial.println("SD Card initialization failed.");
   }
 }
 
-bool HeptaCdh::sd_begin(uint8_t cs_pin) {
-  _sd_cs_pin = cs_pin;
+bool HeptaCdh::sd_begin(void) {
+  SPI.setRX(_sd_rx_pin);
+  SPI.setTX(_sd_tx_pin);
+  SPI.setSCK(_sd_sck_pin);
   SPI.begin();
-  _sd_initialized = SD.begin(_sd_cs_pin);
+  delay(100);
+  for (uint8_t i = 0; i < 3; i++) {
+    _sd_initialized = SD.begin(_sd_cs_pin);
+    if (_sd_initialized) break;
+    delay(100);
+  }
   return _sd_initialized;
 }
 
@@ -34,7 +42,7 @@ bool HeptaCdh::sd_is_available(void) const {
 }
 
 File HeptaCdh::open_file(const char *path, int mode) {
-  if (!_sd_initialized && !sd_begin(_sd_cs_pin)) {
+  if (!_sd_initialized && !sd_begin()) {
     return File();
   }
 
@@ -42,11 +50,18 @@ File HeptaCdh::open_file(const char *path, int mode) {
 }
 
 File HeptaCdh::create_file(const char *path) {
+  if (SD.exists(path)) {
+    SD.remove(path);
+  }
+  return open_file(path, FILE_WRITE);
+}
+
+File HeptaCdh::append_file(const char *path) {
   return open_file(path, FILE_WRITE);
 }
 
 bool HeptaCdh::file_exists(const char *path) {
-  if (!_sd_initialized && !sd_begin(_sd_cs_pin)) {
+  if (!_sd_initialized && !sd_begin()) {
     return false;
   }
 
@@ -54,7 +69,7 @@ bool HeptaCdh::file_exists(const char *path) {
 }
 
 bool HeptaCdh::remove_file(const char *path) {
-  if (!_sd_initialized && !sd_begin(_sd_cs_pin)) {
+  if (!_sd_initialized && !sd_begin()) {
     return false;
   }
 
