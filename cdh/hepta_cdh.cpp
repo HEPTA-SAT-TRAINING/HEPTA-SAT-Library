@@ -47,6 +47,18 @@ size_t HeptaCdh::println(const char *text) {
   return Serial.println(text);
 }
 
+size_t HeptaCdh::write(uint8_t data) {
+  return Serial.write(data);
+}
+
+size_t HeptaCdh::write(const uint8_t *buffer, size_t size) {
+  if (buffer == NULL) {
+    return 0;
+  }
+
+  return Serial.write(buffer, size);
+}
+
 bool HeptaCdh::sd_begin(void) {
   SPI.setRX(_sd_rx_pin);
   SPI.setTX(_sd_tx_pin);

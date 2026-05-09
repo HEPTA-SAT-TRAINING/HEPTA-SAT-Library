@@ -27,6 +27,8 @@ class HeptaCdh {
     size_t print(const char *text);
     size_t println(const String &text);
     size_t println(const char *text);
+    size_t write(uint8_t data);
+    size_t write(const uint8_t *buffer, size_t size);
     cmd_t get_command(void);
     bool command_execute(cmd_t cmd, cmd_arg_t arg = 0);
 
