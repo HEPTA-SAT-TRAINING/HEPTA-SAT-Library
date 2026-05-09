@@ -23,6 +23,30 @@ void HeptaCdh::begin(void) {
   }
 }
 
+size_t HeptaCdh::print(const String &text) {
+  return Serial.print(text);
+}
+
+size_t HeptaCdh::print(const char *text) {
+  if (text == NULL) {
+    return 0;
+  }
+
+  return Serial.print(text);
+}
+
+size_t HeptaCdh::println(const String &text) {
+  return Serial.println(text);
+}
+
+size_t HeptaCdh::println(const char *text) {
+  if (text == NULL) {
+    return 0;
+  }
+
+  return Serial.println(text);
+}
+
 bool HeptaCdh::sd_begin(void) {
   SPI.setRX(_sd_rx_pin);
   SPI.setTX(_sd_tx_pin);

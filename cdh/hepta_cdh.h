@@ -23,6 +23,10 @@ typedef uint64_t cmd_arg_t; // not yet used, but reserved for future use
 class HeptaCdh {
   public:
     void begin(void);
+    size_t print(const String &text);
+    size_t print(const char *text);
+    size_t println(const String &text);
+    size_t println(const char *text);
     cmd_t get_command(void);
     bool command_execute(cmd_t cmd, cmd_arg_t arg = 0);
 
