@@ -13,12 +13,19 @@
 #include "hepta_eps.h"
 
 void HeptaEps::init(void) {
+  analogReadResolution(12);
   pinMode(_bat_vol_pin, INPUT);
 }
 
 float HeptaEps::get_battery_voltage(void) {
-  float voltage = analogRead(_bat_vol_pin) * (_adc_ref_voltage / _adc_max_value);
+  //!@todo 電圧の分圧計算を実装する必要がある
+  // 本来は分圧して電圧を測るはずだが，現在のバージョンではそもそもバッテリ電圧の計測がされていない
+  float voltage = get_battery_voltage_raw() * (_adc_ref_voltage / _adc_max_value);
   return voltage;
+}
+
+uint16_t HeptaEps::get_battery_voltage_raw(void) {
+  return analogRead(_bat_vol_pin);
 }
 
 float HeptaEps::get_current_discharge(void) {

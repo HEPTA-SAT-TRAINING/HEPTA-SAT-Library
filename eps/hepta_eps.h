@@ -31,6 +31,13 @@ class HeptaEps {
     float get_battery_voltage(void);
 
     /**
+     * @brief Get the raw battery voltage reading from the ADC
+     * @return Raw ADC value for battery voltage
+     * 
+     */
+    uint16_t get_battery_voltage_raw(void);
+
+    /**
      * @brief Get the current discharge
      * @return Current discharge in amperes
      */
