@@ -14,5 +14,6 @@
 #define HEPTA_SAT_H
 
 #include "hepta_sat/hepta_cdh.h"
+#include "hepta_sat/hepta_eps.h"
 
 #endif /* HEPTA_SAT_H */
