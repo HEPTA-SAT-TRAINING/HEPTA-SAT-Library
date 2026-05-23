@@ -28,6 +28,10 @@ class HeptaEpsBase {
     const float _adc_ref_voltage = 3.3;
     const uint16_t _adc_max_value = 4096;
 
+    // Battery voltage divider: 12k (top) / 30k (to GND)
+    // Vbat = Vadc * (R_top + R_bottom) / R_bottom = Vadc * 1.4
+    const float _bat_vol_divider_gain = (12000.0f + 30000.0f) / 30000.0f;
+
     const float galvano_gain = 20;
     const float galvano_resistance = 0.02;
 };

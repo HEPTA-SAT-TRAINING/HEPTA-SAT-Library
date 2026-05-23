@@ -7,7 +7,7 @@ void HeptaEpsBase::init(void) {
 }
 
 float HeptaEpsBase::get_battery_voltage(void) {
-  return get_battery_voltage_raw() * (_adc_ref_voltage / _adc_max_value);
+  return get_battery_voltage_raw() * (_adc_ref_voltage / _adc_max_value) * _bat_vol_divider_gain;
 }
 
 uint16_t HeptaEpsBase::get_battery_voltage_raw(void) {
