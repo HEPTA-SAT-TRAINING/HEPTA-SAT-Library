@@ -1,37 +1,18 @@
 /**
- * @file hepta_com.h
- * @author Masaki Naito
- * @brief
- * @version 0.1
- * @date 2024-12-08
- * 
- * @copyright UNISEC all rights reserved.
+ * @file hepta_lite_com.h
+ * @brief HEPTA-SAT Lite COM: XBee SoftwareSerial RX/TX pins for the Lite board.
  */
 
 #ifndef HEPTA_LITE_COM_H
 #define HEPTA_LITE_COM_H
 
-#include <Arduino.h>
-
-#include <SoftwareSerial.h>
+#include "../common/hepta_com_base.h"
 
 
-class HeptaLiteCom {
+class HeptaLiteCom : public HeptaComBase {
   public:
-    HeptaLiteCom();
-
-    void begin(uint16_t baud_rate);
-    char get_char(void);
-    void send_char(const char c);
-
-    String get_text(void);
-    void send_text(const String text);
-
-  private:
-    const uint8_t _rx_pin = 15; // RX pin for communication
-    const uint8_t _tx_pin = 14; // TX pin for communication
-
-    SoftwareSerial XbeeSerial;
+    HeptaLiteCom() : HeptaComBase(/*rx=*/15, /*tx=*/14) {}
 };
+
 
 #endif /* HEPTA_LITE_COM_H */

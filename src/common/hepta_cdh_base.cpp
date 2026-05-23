@@ -9,9 +9,9 @@
  * 
  */
 
-#include "hepta_lite_cdh.h"
+#include "hepta_cdh_base.h"
 
-void HeptaLiteCdh::begin(void) {
+void HeptaCdhBase::begin(void) {
   Serial.begin(9600);
   while (!Serial && millis() < 3000);
   Serial1.begin(9600);
@@ -23,11 +23,11 @@ void HeptaLiteCdh::begin(void) {
   }
 }
 
-size_t HeptaLiteCdh::print(const String &text) {
+size_t HeptaCdhBase::print(const String &text) {
   return Serial.print(text);
 }
 
-size_t HeptaLiteCdh::print(const char *text) {
+size_t HeptaCdhBase::print(const char *text) {
   if (text == NULL) {
     return 0;
   }
@@ -35,11 +35,11 @@ size_t HeptaLiteCdh::print(const char *text) {
   return Serial.print(text);
 }
 
-size_t HeptaLiteCdh::println(const String &text) {
+size_t HeptaCdhBase::println(const String &text) {
   return Serial.println(text);
 }
 
-size_t HeptaLiteCdh::println(const char *text) {
+size_t HeptaCdhBase::println(const char *text) {
   if (text == NULL) {
     return 0;
   }
@@ -47,11 +47,11 @@ size_t HeptaLiteCdh::println(const char *text) {
   return Serial.println(text);
 }
 
-size_t HeptaLiteCdh::write(uint8_t data) {
+size_t HeptaCdhBase::write(uint8_t data) {
   return Serial.write(data);
 }
 
-size_t HeptaLiteCdh::write(const uint8_t *buffer, size_t size) {
+size_t HeptaCdhBase::write(const uint8_t *buffer, size_t size) {
   if (buffer == NULL) {
     return 0;
   }
@@ -59,7 +59,7 @@ size_t HeptaLiteCdh::write(const uint8_t *buffer, size_t size) {
   return Serial.write(buffer, size);
 }
 
-bool HeptaLiteCdh::sd_begin(void) {
+bool HeptaCdhBase::sd_begin(void) {
   SPI.setRX(_sd_rx_pin);
   SPI.setTX(_sd_tx_pin);
   SPI.setSCK(_sd_sck_pin);
@@ -73,11 +73,11 @@ bool HeptaLiteCdh::sd_begin(void) {
   return _sd_initialized;
 }
 
-bool HeptaLiteCdh::sd_is_available(void) const {
+bool HeptaCdhBase::sd_is_available(void) const {
   return _sd_initialized;
 }
 
-File HeptaLiteCdh::open_file(const char *path, int mode) {
+File HeptaCdhBase::open_file(const char *path, int mode) {
   if (!_sd_initialized && !sd_begin()) {
     return File();
   }
@@ -85,18 +85,18 @@ File HeptaLiteCdh::open_file(const char *path, int mode) {
   return SD.open(path, mode);
 }
 
-File HeptaLiteCdh::create_file(const char *path) {
+File HeptaCdhBase::create_file(const char *path) {
   if (SD.exists(path)) {
     SD.remove(path);
   }
   return open_file(path, FILE_WRITE);
 }
 
-File HeptaLiteCdh::append_file(const char *path) {
+File HeptaCdhBase::append_file(const char *path) {
   return open_file(path, FILE_WRITE);
 }
 
-bool HeptaLiteCdh::file_exists(const char *path) {
+bool HeptaCdhBase::file_exists(const char *path) {
   if (!_sd_initialized && !sd_begin()) {
     return false;
   }
@@ -104,7 +104,7 @@ bool HeptaLiteCdh::file_exists(const char *path) {
   return SD.exists(path);
 }
 
-bool HeptaLiteCdh::remove_file(const char *path) {
+bool HeptaCdhBase::remove_file(const char *path) {
   if (!_sd_initialized && !sd_begin()) {
     return false;
   }
@@ -112,7 +112,7 @@ bool HeptaLiteCdh::remove_file(const char *path) {
   return SD.remove(path);
 }
 
-size_t HeptaLiteCdh::write_file(File &file, const char *text) {
+size_t HeptaCdhBase::write_file(File &file, const char *text) {
   if (!file || text == NULL) {
     return 0;
   }
@@ -120,7 +120,7 @@ size_t HeptaLiteCdh::write_file(File &file, const char *text) {
   return file.print(text);
 }
 
-size_t HeptaLiteCdh::write_file(File &file, const uint8_t *buffer, size_t size) {
+size_t HeptaCdhBase::write_file(File &file, const uint8_t *buffer, size_t size) {
   if (!file || buffer == NULL) {
     return 0;
   }
@@ -128,7 +128,7 @@ size_t HeptaLiteCdh::write_file(File &file, const uint8_t *buffer, size_t size) 
   return file.write(buffer, size);
 }
 
-int HeptaLiteCdh::read_file(File &file) {
+int HeptaCdhBase::read_file(File &file) {
   if (!file) {
     return -1;
   }
@@ -136,7 +136,7 @@ int HeptaLiteCdh::read_file(File &file) {
   return file.read();
 }
 
-int HeptaLiteCdh::read_file(File &file, uint8_t *buffer, size_t size) {
+int HeptaCdhBase::read_file(File &file, uint8_t *buffer, size_t size) {
   if (!file || buffer == NULL) {
     return -1;
   }
@@ -144,7 +144,7 @@ int HeptaLiteCdh::read_file(File &file, uint8_t *buffer, size_t size) {
   return file.read(buffer, size);
 }
 
-cmd_t HeptaLiteCdh::get_command(void) {
+cmd_t HeptaCdhBase::get_command(void) {
   cmd_t cmd = 0;
 
   char *e;
@@ -163,7 +163,7 @@ cmd_t HeptaLiteCdh::get_command(void) {
   return cmd; // Return the received command
 }
 
-bool HeptaLiteCdh::command_execute(cmd_t cmd, cmd_arg_t arg) {
+bool HeptaCdhBase::command_execute(cmd_t cmd, cmd_arg_t arg) {
 
   return true; // Return 0 to indicate success
 }
