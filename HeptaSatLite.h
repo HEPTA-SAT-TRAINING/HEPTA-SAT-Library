@@ -7,7 +7,7 @@
  * HeptaLiteEps / HeptaLiteSensor) and nothing else.
  *
  * The full HEPTA-SAT board has a separate entry header (HeptaSat.h)
- * and its classes live in src/hepta_sat/.
+ * and its classes live in hepta_sat/.
  */
 
 #ifndef HEPTA_SAT_LITE_H
