@@ -3,11 +3,13 @@ Library files for next generation HEPTA-Sat
 
 ## CDH SD card access
 
-`HeptaCdh` initializes the SD card in `begin()` and exposes basic file access
+`HeptaLiteCdh` initializes the SD card in `begin()` and exposes basic file access
 through wrapper functions instead of inheriting from `SDClass`.
 
 ```cpp
-HeptaCdh cdh;
+#include <HeptaSatLite.h>
+
+HeptaLiteCdh cdh;
 
 void setup() {
   cdh.begin();

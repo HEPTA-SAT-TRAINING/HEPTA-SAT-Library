@@ -10,14 +10,14 @@
  */
 
 
-#ifndef HEPTA_EPS_H
-#define HEPTA_EPS_H
+#ifndef HEPTA_LITE_EPS_H
+#define HEPTA_LITE_EPS_H
 
 
 #include <Arduino.h>
 
 
-class HeptaEps {
+class HeptaLiteEps {
   public:
     /**
      * @brief Initialize the EPS
@@ -62,4 +62,4 @@ class HeptaEps {
 };
 
 
-#endif /* HEPTA_EPS_H */
+#endif /* HEPTA_LITE_EPS_H */

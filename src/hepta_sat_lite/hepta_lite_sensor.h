@@ -10,14 +10,14 @@
  */
 
 
-#ifndef HEPTA_SENSOR_H
-#define HEPTA_SENSOR_H
+#ifndef HEPTA_LITE_SENSOR_H
+#define HEPTA_LITE_SENSOR_H
 
 #include <Arduino.h>
 
 #include "../drv/imu9axis_bno055.h"
 
-class HeptaSensor {
+class HeptaLiteSensor {
   public:
     bool begin(void);
     float get_temperature(void);
@@ -35,4 +35,4 @@ class HeptaSensor {
 };
 
 
-#endif /* HEPTA_SENSOR_H */
+#endif /* HEPTA_LITE_SENSOR_H */

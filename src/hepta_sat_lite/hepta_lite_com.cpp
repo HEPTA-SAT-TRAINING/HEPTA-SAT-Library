@@ -1,28 +1,28 @@
-#include "hepta_com.h"
+#include "hepta_lite_com.h"
 
 
-HeptaCom::HeptaCom()
+HeptaLiteCom::HeptaLiteCom()
     : XbeeSerial(_rx_pin, _tx_pin) { // Initialize SoftwareSerial with RX and TX pins
 }
 
-void HeptaCom::begin(uint16_t baud_rate) {
+void HeptaLiteCom::begin(uint16_t baud_rate) {
   // Start the SoftwareSerial communication at the specified baud rate
   XbeeSerial.begin(baud_rate);
 }
 
-char HeptaCom::get_char(void) {
+char HeptaLiteCom::get_char(void) {
   return XbeeSerial.read();
 }
 
-void HeptaCom::send_char(const char c) {
+void HeptaLiteCom::send_char(const char c) {
   XbeeSerial.write(c);
 }
 
-void HeptaCom::send_text(String text) {
+void HeptaLiteCom::send_text(String text) {
   XbeeSerial.print(text);
 }
 
-String HeptaCom::get_text(void) {
+String HeptaLiteCom::get_text(void) {
   String received_text = "";
 
   // Check if data is available to read

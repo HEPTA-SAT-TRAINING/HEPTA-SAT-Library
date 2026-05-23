@@ -8,17 +8,17 @@
  * @copyright UNISEC all rights reserved.
  */
 
-#ifndef HEPTA_COM_H
-#define HEPTA_COM_H
+#ifndef HEPTA_LITE_COM_H
+#define HEPTA_LITE_COM_H
 
 #include <Arduino.h>
 
 #include <SoftwareSerial.h>
 
 
-class HeptaCom {
+class HeptaLiteCom {
   public:
-    HeptaCom();
+    HeptaLiteCom();
 
     void begin(uint16_t baud_rate);
     char get_char(void);
@@ -34,4 +34,4 @@ class HeptaCom {
     SoftwareSerial XbeeSerial;
 };
 
-#endif /* HEPTA_COM_H */
+#endif /* HEPTA_LITE_COM_H */

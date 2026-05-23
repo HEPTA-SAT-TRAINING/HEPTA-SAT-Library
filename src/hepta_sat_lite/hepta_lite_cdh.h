@@ -9,8 +9,8 @@
  * 
  */
 
-#ifndef HEPTA_CDH_H
-#define HEPTA_CDH_H
+#ifndef HEPTA_LITE_CDH_H
+#define HEPTA_LITE_CDH_H
 
 #include <Arduino.h>
 #include <SD.h>
@@ -20,7 +20,7 @@ typedef uint8_t cmd_t;
 typedef uint64_t cmd_arg_t; // not yet used, but reserved for future use
 
 
-class HeptaCdh {
+class HeptaLiteCdh {
   public:
     void begin(void);
     size_t print(const String &text);
@@ -53,4 +53,4 @@ class HeptaCdh {
 };
 
 
-#endif /* HEPTA_CDH_H */
+#endif /* HEPTA_LITE_CDH_H */

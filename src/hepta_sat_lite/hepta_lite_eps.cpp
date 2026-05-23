@@ -10,28 +10,28 @@
  */
 
 
-#include "hepta_eps.h"
+#include "hepta_lite_eps.h"
 
-void HeptaEps::init(void) {
+void HeptaLiteEps::init(void) {
   analogReadResolution(12);
   pinMode(_bat_vol_pin, INPUT);
 }
 
-float HeptaEps::get_battery_voltage(void) {
+float HeptaLiteEps::get_battery_voltage(void) {
   //!@todo 電圧の分圧計算を実装する必要がある
   // 本来は分圧して電圧を測るはずだが，現在のバージョンではそもそもバッテリ電圧の計測がされていない
   float voltage = get_battery_voltage_raw() * (_adc_ref_voltage / _adc_max_value);
   return voltage;
 }
 
-uint16_t HeptaEps::get_battery_voltage_raw(void) {
+uint16_t HeptaLiteEps::get_battery_voltage_raw(void) {
   return analogRead(_bat_vol_pin);
 }
 
-float HeptaEps::get_current_discharge(void) {
+float HeptaLiteEps::get_current_discharge(void) {
   return (analogRead(_current_discharge_pin) * _adc_ref_voltage / _adc_max_value / galvano_gain) / galvano_resistance;
 }
 
-float HeptaEps::get_current_charge(void) {
+float HeptaLiteEps::get_current_charge(void) {
   return (analogRead(_current_charge_pin) * _adc_ref_voltage / _adc_max_value / galvano_gain) / galvano_resistance;
 }
