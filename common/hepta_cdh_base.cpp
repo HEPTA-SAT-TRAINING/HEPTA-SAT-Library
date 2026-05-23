@@ -47,6 +47,49 @@ size_t HeptaCdhBase::println(const char *text) {
   return Serial.println(text);
 }
 
+size_t HeptaCdhBase::printf(const char *format, ...) {
+  if (format == NULL) {
+    return 0;
+  }
+
+  va_list args;
+  va_start(args, format);
+  size_t n = vprintf(format, args);
+  va_end(args);
+  return n;
+}
+
+size_t HeptaCdhBase::vprintf(const char *format, va_list args) {
+  if (format == NULL) {
+    return 0;
+  }
+
+  char buffer[128];
+  va_list args_copy;
+  va_copy(args_copy, args);
+  int needed = vsnprintf(buffer, sizeof(buffer), format, args_copy);
+  va_end(args_copy);
+
+  if (needed < 0) {
+    return 0;
+  }
+
+  if ((size_t)needed < sizeof(buffer)) {
+    return Serial.write((const uint8_t *)buffer, (size_t)needed);
+  }
+
+  // Buffer was too small: allocate exact size and retry.
+  size_t size = (size_t)needed + 1;
+  char *heap = (char *)malloc(size);
+  if (heap == NULL) {
+    return Serial.write((const uint8_t *)buffer, sizeof(buffer) - 1);
+  }
+  vsnprintf(heap, size, format, args);
+  size_t written = Serial.write((const uint8_t *)heap, (size_t)needed);
+  free(heap);
+  return written;
+}
+
 size_t HeptaCdhBase::write(uint8_t data) {
   return Serial.write(data);
 }

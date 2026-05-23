@@ -13,6 +13,7 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <SPI.h>
+#include <stdarg.h>
 
 typedef uint8_t cmd_t;
 typedef uint64_t cmd_arg_t; // not yet used, but reserved for future use
@@ -25,6 +26,8 @@ class HeptaCdhBase {
     size_t print(const char *text);
     size_t println(const String &text);
     size_t println(const char *text);
+    size_t printf(const char *format, ...) __attribute__((format(printf, 2, 3)));
+    size_t vprintf(const char *format, va_list args);
     size_t write(uint8_t data);
     size_t write(const uint8_t *buffer, size_t size);
     cmd_t get_command(void);
