@@ -13,7 +13,6 @@
 
 void HeptaCdhBase::begin(void) {
   Serial.begin(9600);
-  while (!Serial && millis() < 3000);
   Serial1.begin(9600);
 
   if (sd_begin()) {
@@ -21,6 +20,10 @@ void HeptaCdhBase::begin(void) {
   } else {
     Serial.println("SD Card initialization failed.");
   }
+}
+
+void HeptaCdhBase::wait_for_serial(void) {
+  while (!Serial);
 }
 
 size_t HeptaCdhBase::print(const String &text) {

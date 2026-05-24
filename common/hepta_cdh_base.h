@@ -22,6 +22,7 @@ typedef uint64_t cmd_arg_t; // not yet used, but reserved for future use
 class HeptaCdhBase {
   public:
     void begin(void);
+    void wait_for_serial(void);
     size_t print(const String &text);
     size_t print(const char *text);
     size_t println(const String &text);
