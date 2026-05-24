@@ -30,6 +30,8 @@ class HeptaCdhBase {
     size_t println(const char *text);
     size_t printf(const char *format, ...) __attribute__((format(printf, 2, 3)));
     size_t vprintf(const char *format, va_list args);
+    size_t printf_file(File &file, const char *format, ...) __attribute__((format(printf, 3, 4)));
+    size_t vprintf_file(File &file, const char *format, va_list args);
     size_t write(uint8_t data);
     size_t write(const uint8_t *buffer, size_t size);
     cmd_t get_command(void);
