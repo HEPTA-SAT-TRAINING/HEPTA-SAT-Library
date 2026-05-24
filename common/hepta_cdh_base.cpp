@@ -15,15 +15,19 @@ void HeptaCdhBase::begin(void) {
   Serial.begin(9600);
   Serial1.begin(9600);
 
-  if (sd_begin()) {
-    Serial.println("SD Card initialized successfully.");
-  } else {
-    Serial.println("SD Card initialization failed.");
-  }
+  sd_begin();
 }
 
 void HeptaCdhBase::wait_for_serial(void) {
   while (!Serial);
+}
+
+void HeptaCdhBase::wait_for_sd(void) {
+  while (!_sd_initialized) {
+    Serial.println("SD Card initialization failed. Retrying...");
+    sd_begin();
+    delay(1000);
+  }
 }
 
 size_t HeptaCdhBase::print(const String &text) {
