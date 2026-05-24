@@ -18,11 +18,11 @@ void HeptaEps::init(void) {
 }
 
 void HeptaEps::switch_3V3_on(void) {
-  digitalWrite(_sw_3v3_pin, HIGH);
+  digitalWrite(_sw_3v3_pin, LOW);
 }
 
 void HeptaEps::switch_3V3_off(void) {
-  digitalWrite(_sw_3v3_pin, LOW);
+  digitalWrite(_sw_3v3_pin, HIGH);
 }
 
 float HeptaEps::get_5v_voltage(void) {
