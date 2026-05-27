@@ -65,21 +65,28 @@ class CameraC1098 {
      */
     uint32_t take_picture(void);
 
-    
+
+    /**
+     * @brief Return the fixed packet size used for image transfer
+     * @return Packet size in bytes (always PACKET_LEN = 512)
+     */
     uint16_t get_packet_size(void);
   
     /**
-     * @brief パケット単位で画像データを取得する
-     * @param buf 受信バッファ
-     * @param max_size バッファサイズ
-     * @return 実際に受信したバイト数（最後のパケットは512未満になる場合あり、0ならデータ終了）
+     * @brief Retrieve one packet of image data from the camera
+     * @param buf    Receive buffer (must be at least PACKET_LEN bytes)
+     * @param max_size Size of the buffer in bytes
+     * @return Number of image-data bytes written to buf
+     *         (may be less than PACKET_LEN for the last packet),
+     *         0 when all data has been received, or -1 on error
      */
     int get_image_data_packet(uint8_t *buf, size_t max_size);
 
   private:
     const uint16_t PACKET_LEN = 512;
     bool _is_setup_fin = false;
-    uint32_t _data_len;
+    uint32_t _data_len = 0;
+    uint16_t _pkg_counter = 0;   // Package ID counter incremented with each received packet
 
     // command
     bool _initial(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size);
@@ -89,7 +96,7 @@ class CameraC1098 {
     bool _reset(void);
     uint32_t _data_length(void);
     bool _sync(void);
-    void _send_ack(void); 
+    void _send_ack(void);        // Send a command ACK packet: AA 0E 00 00 00 00
 
     bool _is_ack_ok(void);
     bool _is_sync_ok(void);

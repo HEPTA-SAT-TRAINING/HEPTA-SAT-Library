@@ -1,5 +1,8 @@
 #include "hepta_sensor.h"
 
+#include <SPI.h>
+#include <SD.h>
+
 
 float HeptaSensor::get_temperature(void) {
   // resistance [Ω]
@@ -37,4 +40,46 @@ float HeptaSensor::get_temperature(void) {
   float temp = (Rth - Pt) / (ce * Pt);
 
   return temp;
+}
+
+bool HeptaSensor::camera_snapshot(const char* filename) {
+  if (!cam.begin(C1098_BAUD_RATE_115200, C1098_JPEG_SIZE_VGA)) {
+    return false;
+  }
+
+  uint32_t data_len = cam.take_picture();
+  if (data_len == 0) {
+    Serial.println("No picture data available.");
+    return false;
+  }
+
+  // O_TRUNC truncates the file to zero length on open so each snapshot
+  // starts fresh. FILE_WRITE cannot be used here because it implies O_APPEND.
+  File file = SD.open(filename, O_WRITE | O_CREAT | O_TRUNC);
+  if (!file) {
+    Serial.println("Failed to open file for writing.");
+    return false;
+  }
+
+  uint8_t buf[512];  // must be at least cam.get_packet_size() (= 512) bytes
+  uint32_t total_written = 0;
+  while (true) {
+    int read_size = cam.get_image_data_packet(buf, sizeof(buf));
+    if (read_size <= 0) break;
+    file.write(buf, read_size);
+    total_written += read_size;
+  }
+  file.close();
+
+  if (total_written != data_len) {
+    Serial.print("Warning: expected ");
+    Serial.print(data_len);
+    Serial.print(" bytes, but wrote ");
+    Serial.println(total_written);
+    return false;
+  }
+
+  Serial.print("Picture saved successfully. Total bytes: ");
+  Serial.println(total_written);
+  return true;
 }

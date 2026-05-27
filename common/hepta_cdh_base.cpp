@@ -13,8 +13,6 @@
 
 void HeptaCdhBase::begin(void) {
   Serial.begin(9600);
-  Serial1.begin(9600);
-
   sd_begin();
 }
 
@@ -236,23 +234,20 @@ int HeptaCdhBase::read_file(File &file, uint8_t *buffer, size_t size) {
   return file.read(buffer, size);
 }
 
-cmd_t HeptaCdhBase::get_command(void) {
-  cmd_t cmd = 0;
+bool HeptaCdhBase::is_cmd_received(void) {
+  // Check if there is any data available in the serial buffer
+  return Serial.available() > 0;
+}
 
-  char *e;
-  uint8_t base = 10;
-  if (Serial.available()) {
-    String input = Serial.readStringUntil('\n'); // 1行分読み込む
-    cmd = (cmd_t)strtol(input.c_str(), &e, base);
+char HeptaCdhBase::get_command(void) {
+  // Read one command character and ignore line endings from Serial Monitor.
+  while (is_cmd_received()) {
+    char received_char = Serial.read();
+    if (received_char != '\r' && received_char != '\n') {
+      return received_char;
+    }
   }
-
-
-  if(cmd!= 0) {
-    Serial.print("Received command: ");
-    Serial.println(cmd, HEX);
-  }
-
-  return cmd; // Return the received command
+  return '\0'; // Return null character if no data is available
 }
 
 bool HeptaCdhBase::command_execute(cmd_t cmd, cmd_arg_t arg) {
