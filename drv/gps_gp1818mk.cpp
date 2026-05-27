@@ -1,18 +1,28 @@
 /**
  * @file gps_gp1818mk.cpp
  * @author Masaki Naito
- * @brief 
- * @version 0.1
+ * @brief Driver implementation for GP-1818MK GPS module
+ * @version 0.3
  * @date 2025-02-26
- * 
+ *
  * @copyright UNISEC all rights reserved.
- * 
  */
 
 #include "gps_gp1818mk.h"
 
+/**
+ * @brief Convert NMEA coordinate format (DDMM.MMMM) to decimal degrees.
+ *
+ * GPS outputs latitude as DDMM.MMMM (e.g. 3543.1234 = 35°43.1234')
+ * and longitude as DDDMM.MMMM. Formula: DD + MM.MMMM / 60
+ */
+static float nmea_to_decimal(float nmea_value) {
+  int   degrees = (int)(nmea_value / 100.0f);
+  float minutes = nmea_value - (float)degrees * 100.0f;
+  return (float)degrees + minutes / 60.0f;
+}
+
 void Gps1818mk::begin(void) {
-  // 修正: SoftwareSerialインスタンスを初期化
   if (!_serial) {
     _serial = new SoftwareSerial(_rx_pin, _tx_pin);
     _serial->begin(9600);
@@ -20,218 +30,51 @@ void Gps1818mk::begin(void) {
 }
 
 void Gps1818mk::read_raw(void) {
-  char buf;
-  uint16_t timeout = 0;
-  while(1) {
-    timeout++;
-    if(_serial && _serial->available()) {
-      buf = _serial->read();
-      Serial.print(buf);
-    }
-    if(timeout >= UINT16_MAX - 1) {
-      Serial.println("Timeout");
-      break;
+  if (!_serial) return;
+  const uint32_t TIMEOUT_MS = 5000;
+  uint32_t start = millis();
+  while (millis() - start < TIMEOUT_MS) {
+    if (_serial->available()) {
+      Serial.write((char)_serial->read());
     }
   }
 }
 
 bool Gps1818mk::get_position(float* lat, float* lon, float* alt) {
-  if (!wait_serial()) {
+  if (!wait_serial())           return false;
+  if (!get_header("$GPGGA")) {
+    Serial.println("get_position: GPGGA header not found");
     return false;
   }
-
-  char gpgga[6] = {'$', 'G', 'P', 'G', 'G', 'A'};
-  if(!get_header(gpgga)) {
-    Serial.println("Header error");
-    return 0;
-  }
-
-  const uint16_t GPGGA_LEN_MAX = 256;
-  char rawdata[256] = {0};
-  uint8_t actual_len = 0;
-  int buf = 0;
-
-  for(uint16_t i = 0; i < GPGGA_LEN_MAX; i++) {
-    buf = read_byte();
-    if(i > 0) {
-      rawdata[i - 1] = (char)buf;
-      if(i > 1 && rawdata[i-2] == '\r' && rawdata[i-1] == '\n') {
-        actual_len = i;
-        break;
-      }
-    }
-    if(i >= GPGGA_LEN_MAX - 1) {
-      Serial.println("Packet error");
-      return 0;
-    }
-  }
-
-  float utc_time = 0, lat_deg = 0, lon_deg = 0, msl_alt = 0;
-  int fix = 0, sat_num = 0, quality = 0;
-  char lat_direc = 0, lon_direc = 0, unit = 0, geoid_unit = 0;
-  float hdop = 0, geoid = 0;
-  // 修正: ダミー変数を用意
-  sscanf(rawdata,"%f,%f,%c,%f,%c,%d,%d,%f,%f,%c,%f,%c",
-         &utc_time,&lat_deg,&lat_direc,&lon_deg,&lon_direc,
-         &fix,&sat_num,&hdop,&msl_alt,&unit,&geoid,&geoid_unit);
-
-  if(fix == 0) {
-    return 0;
-  }
-
-  int lat_d = (int)(lat_deg/100.0f);
-  float lat_f = (lat_deg - (float)lat_d*100.0f);
-  *lat = (float)lat_d + lat_f/60.0f;
-
-  int lon_d = (int)(lon_deg/100.0f);
-  float lon_f = (lon_deg - (float)lon_d*100.0f);
-  *lon = (float)lon_d + lon_f/60.0f;
-
-  *alt = msl_alt;
-
-  return 1;
+  return parse_gpgga(lat, lon, alt);
 }
 
-bool Gps1818mk::get_all(float* lat, float* lon, float* alt, float* velocity, float* heading) {
-  wait_serial();
-
-  char gpgga[6] = {'$', 'G', 'P', 'G', 'G', 'A'};
-  if(!get_header(gpgga)) {
-    Serial.println("Header error");
-    return 0;
+bool Gps1818mk::get_velocity(float* velocity, float* heading) {
+  if (!wait_serial())           return false;
+  if (!get_header("$GPRMC")) {
+    Serial.println("get_velocity: GPRMC header not found");
+    return false;
   }
-
-  const uint16_t GPGGA_LEN_MAX = 256;
-  char raw_gpgga[256] = {0};
-  int buf = 0;
-
-  for(uint16_t i = 0; i < GPGGA_LEN_MAX; i++) {
-    buf = read_byte();
-    if(i > 0) {
-      raw_gpgga[i - 1] = (char)buf;
-      if(i > 1 && raw_gpgga[i-2] == '\r' && raw_gpgga[i-1] == '\n') {
-        break;
-      }
-    }
-    if(i >= GPGGA_LEN_MAX - 1) {
-      Serial.println("Packet error");
-      return 0;
-    }
-  }
-
-  const uint16_t GPRMC_LEN_MAX = 256;
-  char raw_gprmc[256] = {0};
-
-  for(uint16_t i = 0; i < GPRMC_LEN_MAX; i++) {
-    buf = read_byte();
-    if(i > 0) {
-      raw_gprmc[i - 1] = (char)buf;
-      if(i > 1 && raw_gprmc[i-2] == '\r' && raw_gprmc[i-1] == '\n') {
-        break;
-      }
-    }
-    if(i >= GPRMC_LEN_MAX - 1) {
-      Serial.println("Packet error");
-      return 0;
-    }
-  }
-
-  float utc_time = 0, lat_deg = 0, lon_deg = 0, msl_alt = 0;
-  int fix = 0, sat_num = 0, quality = 0;
-  char lat_direc = 0, lon_direc = 0, unit = 0, geoid_unit = 0;
-  float hdop = 0, geoid = 0;
-  sscanf(raw_gpgga,"%f,%f,%c,%f,%c,%d,%d,%f,%f,%c,%f,%c",
-         &utc_time,&lat_deg,&lat_direc,&lon_deg,&lon_direc,
-         &fix,&sat_num,&hdop,&msl_alt,&unit,&geoid,&geoid_unit);
-
-  if(fix == 0) {
-    return 0;
-  }
-
-  int lat_d = (int)(lat_deg/100.0f);
-  float lat_f = (lat_deg - (float)lat_d*100.0f);
-  *lat = (float)lat_d + lat_f/60.0f;
-
-  int lon_d = (int)(lon_deg/100.0f);
-  float lon_f = (lon_deg - (float)lon_d*100.0f);
-  *lon = (float)lon_d + lon_f/60.0f;
-
-  *alt = msl_alt;
-
-  char gprmc[6] = {'$', 'G', 'P', 'R', 'M', 'C'};
-  if(!get_header(gprmc)) {
-    Serial.println("Header error");
-    return 0;
-  }
-
-  float utc_time2 = 0, lat_deg2 = 0, lon_deg2 = 0, speed_kt = 0, course = 0;
-  char status = 0, lat_direc2 = 0, lon_direc2 = 0, date[7] = {0};
-  // 修正: sscanfの書式と変数数を合わせる
-  sscanf(raw_gprmc, "%f,%c,%f,%c,%f,%c,%f,%f,%6s,%f,%f",
-         &utc_time2, &status, &lat_deg2, &lat_direc2, &lon_deg2, &lon_direc2, &speed_kt, &course, date, &msl_alt, &geoid);
-
-  if(status == 'V') {
-    return 0;
-  }
-
-  *velocity = speed_kt * 0.514444f;
-  *heading = course;
-
-  return 1;
+  return parse_gprmc(velocity, heading);
 }
 
-int Gps1818mk::read_byte(void) {
-  for(uint32_t i = 0; i < UINT32_MAX; i++) {
-    if(_serial && _serial->available()) {
-      break;
-    }
-    if(i >= UINT32_MAX - 1) {
-      Serial.println("Serial unvailable");
-      return -1;
-    }
-  }
-  return _serial ? _serial->read() : -1;
-}
+bool Gps1818mk::get_all(float* lat, float* lon, float* alt,
+                         float* velocity, float* heading) {
+  if (!wait_serial()) return false;
 
-bool Gps1818mk::wait_serial(void) {
-  for(uint16_t i = 0; i < UINT16_MAX; i++) {
-    if(_serial && _serial->available()) {
-      return true;
-    }
-    if(i >= 1000) {
-      Serial.println("Serial unvailable");
-      Serial.println("Please check the GPS connection.");
-      return false;
-    }
-    delay(1);
+  // GPGGA: position + altitude
+  if (!get_header("$GPGGA")) {
+    Serial.println("get_all: GPGGA header not found");
+    return false;
   }
-  return false;
-}
+  if (!parse_gpgga(lat, lon, alt)) return false;
 
-bool Gps1818mk::get_header(char array[]) {
-  char header[6] = {0};
-  // 最初の5バイトを先に読む
-  for(uint8_t j = 0; j < 5; j++) {
-    header[j] = (char)read_byte();
+  // GPRMC: velocity + heading
+  if (!get_header("$GPRMC")) {
+    Serial.println("get_all: GPRMC header not found");
+    return false;
   }
-  for(uint16_t i = 0; i < UINT16_MAX; i++) {
-    header[5] = (char)read_byte();
-    bool match = true;
-    for(uint8_t j = 0; j < 6; j++) {
-      if(header[j] != array[j]) {
-        match = false;
-        break;
-      }
-    }
-    if(match) return 1;
-    for(uint8_t j = 0; j < 5; j++) {
-      header[j] = header[j+1];
-    }
-    if(i >= UINT16_MAX - 1) {
-      return 0;
-    }
-  }
-  return 0;
+  return parse_gprmc(velocity, heading);
 }
 
 bool Gps1818mk::is_data_available(void) {
@@ -241,14 +84,165 @@ bool Gps1818mk::is_data_available(void) {
 void Gps1818mk::test_gps(void) {
   float lat, lon, alt;
   begin();
-  if(get_position(&lat, &lon, &alt)) {
+  if (get_position(&lat, &lon, &alt)) {
     Serial.println("-------------------");
-    Serial.print("Lat: ");
-    Serial.println(lat, 6);
-    Serial.print("Lon: ");
-    Serial.println(lon, 6);
-    Serial.print("Alt: ");
-    Serial.println(alt, 1);
+    Serial.print("Lat: "); Serial.println(lat, 6);
+    Serial.print("Lon: "); Serial.println(lon, 6);
+    Serial.print("Alt: "); Serial.println(alt, 1);
     Serial.println("-------------------");
+  } else {
+    Serial.println("test_gps: failed to get a valid position fix");
   }
+}
+
+int Gps1818mk::read_byte(void) {
+  if (!_serial) return -1;
+  const uint32_t TIMEOUT_MS = 200;
+  uint32_t start = millis();
+  while (millis() - start < TIMEOUT_MS) {
+    if (_serial->available()) return _serial->read();
+  }
+  Serial.println("read_byte: timeout");
+  return -1;
+}
+
+bool Gps1818mk::wait_serial(void) {
+  if (!_serial) return false;
+  const uint32_t TIMEOUT_MS = 1000;
+  uint32_t start = millis();
+  while (millis() - start < TIMEOUT_MS) {
+    if (_serial->available()) return true;
+    delay(1);
+  }
+  Serial.println("wait_serial: timeout. Please check the GPS connection.");
+  return false;
+}
+
+bool Gps1818mk::get_header(const char* header) {
+  /*
+   * Sliding-window search: shift the 6-byte window on each new byte,
+   * then compare against the target header.
+   *
+   *   before: [A][B][C][D][E][F]
+   *   +G   →  [B][C][D][E][F][G]  ← compare here
+   */
+  const uint8_t  HEADER_LEN       = 6;
+  const uint32_t TOTAL_TIMEOUT_MS = 5000;
+  char     window[HEADER_LEN]     = {0};
+  uint32_t start                  = millis();
+
+  for (uint8_t j = 0; j < HEADER_LEN - 1; j++) {
+    int b = read_byte();
+    if (b < 0 || millis() - start >= TOTAL_TIMEOUT_MS) return false;
+    window[j] = (char)b;
+  }
+
+  while (millis() - start < TOTAL_TIMEOUT_MS) {
+    int b = read_byte();
+    if (b < 0) return false;
+
+    for (uint8_t j = 0; j < HEADER_LEN - 1; j++) window[j] = window[j + 1];
+    window[HEADER_LEN - 1] = (char)b;
+
+    bool match = true;
+    for (uint8_t j = 0; j < HEADER_LEN; j++) {
+      if (window[j] != header[j]) { match = false; break; }
+    }
+    if (match) return true;
+  }
+
+  return false;
+}
+
+bool Gps1818mk::parse_gpgga(float* lat, float* lon, float* alt) {
+  /*
+   * GPGGA fields after "$GPGGA,":
+   *   UTC, Lat, N/S, Lon, E/W, Fix, Sats, HDOP, Alt, M, Geoid, M
+   *
+   * Fix: 0 = no fix, 1 = GPS, 2 = DGPS
+   */
+
+  // "$GPGGA" is immediately followed by a comma before the data fields
+  if (read_byte() < 0) return false;
+
+  const uint16_t BUF_LEN = 128;
+  char raw[BUF_LEN] = {0};
+  bool found_end = false;
+
+  for (uint16_t i = 0; i < BUF_LEN - 1; i++) {
+    int b = read_byte();
+    if (b < 0) { Serial.println("parse_gpgga: read timeout"); return false; }
+    raw[i] = (char)b;
+    if (i > 0 && raw[i - 1] == '\r' && raw[i] == '\n') { found_end = true; break; }
+  }
+
+  if (!found_end) {
+    Serial.println("parse_gpgga: sentence too long or missing terminator");
+    return false;
+  }
+
+  float utc_time = 0, lat_raw = 0, lon_raw = 0, msl_alt = 0, hdop = 0, geoid = 0;
+  int   fix_quality = 0, sat_num = 0;
+  char  lat_dir = 0, lon_dir = 0, alt_unit = 0, geoid_unit = 0;
+
+  sscanf(raw, "%f,%f,%c,%f,%c,%d,%d,%f,%f,%c,%f,%c",
+         &utc_time, &lat_raw, &lat_dir, &lon_raw, &lon_dir,
+         &fix_quality, &sat_num, &hdop, &msl_alt, &alt_unit, &geoid, &geoid_unit);
+
+  if (fix_quality == 0) return false;
+
+  *lat = nmea_to_decimal(lat_raw);
+  *lon = nmea_to_decimal(lon_raw);
+
+  // South latitude and West longitude are expressed as negative values
+  if (lat_dir == 'S') *lat = -*lat;
+  if (lon_dir == 'W') *lon = -*lon;
+
+  *alt = msl_alt;
+  return true;
+}
+
+bool Gps1818mk::parse_gprmc(float* velocity, float* heading) {
+  /*
+   * GPRMC fields after "$GPRMC,":
+   *   UTC, Status, Lat, N/S, Lon, E/W, Speed(kt), Course(deg), Date, ...
+   *
+   * Status: 'A' = valid fix, 'V' = void (no fix)
+   */
+
+  // "$GPRMC" is immediately followed by a comma before the data fields
+  if (read_byte() < 0) return false;
+
+  const uint16_t BUF_LEN = 128;
+  char raw[BUF_LEN] = {0};
+  bool found_end = false;
+
+  for (uint16_t i = 0; i < BUF_LEN - 1; i++) {
+    int b = read_byte();
+    if (b < 0) { Serial.println("parse_gprmc: read timeout"); return false; }
+    raw[i] = (char)b;
+    if (i > 0 && raw[i - 1] == '\r' && raw[i] == '\n') { found_end = true; break; }
+  }
+
+  if (!found_end) {
+    Serial.println("parse_gprmc: sentence too long or missing terminator");
+    return false;
+  }
+
+  float utc_time = 0, lat_raw = 0, lon_raw = 0, speed_kt = 0, course = 0;
+  char  status = 0, lat_dir = 0, lon_dir = 0, date[7] = {0};
+
+  sscanf(raw, "%f,%c,%f,%c,%f,%c,%f,%f,%6s",
+         &utc_time, &status,
+         &lat_raw, &lat_dir,  // consumed to reach speed_kt and course
+         &lon_raw, &lon_dir,
+         &speed_kt, &course, date);
+
+  if (status == 'V') return false;
+
+  const float KNOT_TO_MPS = 0.514444f;  // 1 knot = 0.514444 m/s
+  *velocity = speed_kt * KNOT_TO_MPS;
+  *heading  = course;
+
+  return true;
 }
