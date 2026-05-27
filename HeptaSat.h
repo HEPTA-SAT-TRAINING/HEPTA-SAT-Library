@@ -15,5 +15,6 @@
 
 #include "hepta_sat/hepta_cdh.h"
 #include "hepta_sat/hepta_eps.h"
+#include "hepta_sat/hepta_sensor.h"
 
 #endif /* HEPTA_SAT_H */
