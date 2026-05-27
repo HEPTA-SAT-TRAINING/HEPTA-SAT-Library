@@ -13,10 +13,8 @@
 #include <Wire.h>
 
 void Bno055::begin(void) {
-  if(millis() < 750) {
-    while(millis() < 750) {
-      // Wait for 750ms to ensure the sensor is ready
-    }
+  while(millis() < 750) {
+    // Wait for 750ms to ensure the sensor is ready
   }
 
   Wire.begin();
@@ -26,7 +24,7 @@ void Bno055::begin(void) {
 }
 
 void Bno055::sen_acc(float *ax, float *ay, float *az) {
-  uint8_t data[6];
+  uint8_t data[6] = {0};
 
   for(uint8_t i = 0; i < 6; i++) {
     Wire.beginTransmission(I2C_ADDR_BNO055);
@@ -45,11 +43,11 @@ void Bno055::sen_acc(float *ax, float *ay, float *az) {
 }
 
 void Bno055::sen_gyro(float *gx, float *gy, float *gz) {
-  uint8_t data[6];
+  uint8_t data[6] = {0};
 
   for(uint8_t i = 0; i < 6; i++) {
     Wire.beginTransmission(I2C_ADDR_BNO055);
-    Wire.write(0x14 + i); // Gyro data registers
+    Wire.write(BNO055_GYR_DATA_X_LSB + i);
     Wire.endTransmission();
 
     Wire.requestFrom(I2C_ADDR_BNO055, 1);
@@ -64,11 +62,11 @@ void Bno055::sen_gyro(float *gx, float *gy, float *gz) {
 }
 
 void Bno055::sen_mag(float *mx,float *my,float *mz) {
-  uint8_t data[6];
+  uint8_t data[6] = {0};
 
   for(uint8_t i = 0; i < 6; i++) {
     Wire.beginTransmission(I2C_ADDR_BNO055);
-    Wire.write(0x0E + i); // Magnetometer data registers
+    Wire.write(BNO055_MAG_DATA_X_LSB + i);
     Wire.endTransmission();
 
     Wire.requestFrom(I2C_ADDR_BNO055, 1);

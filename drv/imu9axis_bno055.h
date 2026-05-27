@@ -9,15 +9,15 @@
  */
 
 
-#ifndef IMU9AIXS_BNO055_H
-#define IMU9AIXS_BNO055_H
+#ifndef IMU9AXIS_BNO055_H
+#define IMU9AXIS_BNO055_H
 
 #include <Arduino.h>
 
 class Bno055 {
   public:
     /**
-     * @brief Begin transmittion with BNO055
+     * @brief Begin transmission with BNO055
      */
     void begin(void);
 
@@ -75,4 +75,4 @@ class Bno055 {
 };
 
 
-#endif /* IMU9AIXS_BNO055_H */
+#endif /* IMU9AXIS_BNO055_H */
