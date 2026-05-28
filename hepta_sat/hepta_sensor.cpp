@@ -52,6 +52,7 @@ bool HeptaSensor::camera_snapshot(const char* filename) {
   uint32_t data_len = cam.take_picture();
   if (data_len == 0) {
     Serial.println("No picture data available.");
+    cam.invalidate();
     return false;
   }
 

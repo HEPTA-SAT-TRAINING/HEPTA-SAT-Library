@@ -24,7 +24,6 @@ bool CameraC1098::begin(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size) {
       Serial.println("begin: config changed — re-syncing camera");
       invalidate();  // _is_setup_fin = false; fall through to full init below
     } else {
-      CAM_SERIAL.begin(115200);
       while (CAM_SERIAL.available()) CAM_SERIAL.read();
       return true;
     }
