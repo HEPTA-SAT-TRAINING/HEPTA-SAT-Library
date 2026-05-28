@@ -43,8 +43,15 @@ uint16_t AdcMcp3208::get_raw_data(uint8_t channel) {
 }
 
 float AdcMcp3208::get_voltage(uint8_t channel) {
-  uint16_t raw_data = get_raw_data(channel);
-  return (raw_data * _ref_voltage) / 4096.0; // Convert to voltage
+  const uint8_t sample_count = 10;
+  uint32_t raw_data_sum = 0;
+
+  for (uint8_t i = 0; i < sample_count; i++) {
+    raw_data_sum += get_raw_data(channel);
+  }
+
+  float average_raw_data = static_cast<float>(raw_data_sum) / sample_count;
+  return (average_raw_data * _ref_voltage) / 4096.0; // Convert to voltage
 }
 
 void AdcMcp3208::spi_block_transaction(uint16_t* send_data, uint16_t* ret_data, uint8_t Byte_size){

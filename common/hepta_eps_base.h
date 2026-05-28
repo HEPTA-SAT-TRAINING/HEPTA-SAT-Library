@@ -32,7 +32,7 @@ class HeptaEpsBase {
     // Vbat = Vadc * (R_top + R_bottom) / R_bottom = Vadc * 1.4
     const float _bat_vol_divider_gain = (12000.0f + 30000.0f) / 30000.0f;
 
-    const float galvano_gain = 20;
+    const float galvano_gain = 50;
     const float galvano_resistance = 0.02;
 };
 
