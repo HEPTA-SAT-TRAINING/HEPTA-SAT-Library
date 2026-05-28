@@ -26,8 +26,10 @@ float HeptaSensor::get_temperature(void) {
   const float gain   = -R5 * I / R4;
   const float offset = Vref + I * R3;
 
-  // ADC → voltage at pin (12-bit, Vref = 3.3 V)
-  float adc_volt = analogRead(_temp_pin) * 3.3f / 4095.0f;
+  // ADC → voltage at pin.
+  // Delegates to the base-class helper, which relies on analogReadResolution(12)
+  // having been set in HeptaSensorBase::begin(). Consistent with HeptaLiteSensor.
+  float adc_volt = read_temp_voltage();
 
   // undo voltage divider to recover signal voltage
   // V_adc = raw_volt * R_1 / (R_1 + R_2)  →  raw_volt = V_adc * (R_1 + R_2) / R_1

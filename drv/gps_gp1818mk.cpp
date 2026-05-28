@@ -62,6 +62,13 @@ bool Gps1818mk::get_all(float* lat, float* lon, float* alt,
                          float* velocity, float* heading) {
   if (!wait_serial()) return false;
 
+  // GP-1818MK outputs sentences in standard NMEA order: $GPGGA before $GPRMC.
+  // Searching GGA first and then RMC is therefore safe for this module — after GGA
+  // is found and consumed, RMC will arrive later in the same 1 Hz cycle.
+  // If called with a non-standard module that emits RMC before GGA, the RMC search
+  // would have to wait for the next cycle (~1 s); use get_position()/get_velocity()
+  // separately in that case.
+
   // GPGGA: position + altitude
   if (!get_header("$GPGGA")) {
     Serial.println("get_all: GPGGA header not found");
@@ -69,7 +76,7 @@ bool Gps1818mk::get_all(float* lat, float* lon, float* alt,
   }
   if (!parse_gpgga(lat, lon, alt)) return false;
 
-  // GPRMC: velocity + heading
+  // GPRMC: velocity + heading (arrives after GPGGA in the same cycle)
   if (!get_header("$GPRMC")) {
     Serial.println("get_all: GPRMC header not found");
     return false;
@@ -131,15 +138,19 @@ bool Gps1818mk::get_header(const char* header) {
   char     window[HEADER_LEN]     = {0};
   uint32_t start                  = millis();
 
-  for (uint8_t j = 0; j < HEADER_LEN - 1; j++) {
+  // Pre-fill the first HEADER_LEN-1 bytes of the window.
+  // Use index-advance-on-success so inter-sentence gaps (read_byte() == -1) are retried
+  // without consuming a slot in the window.
+  for (uint8_t j = 0; j < HEADER_LEN - 1; ) {
+    if (millis() - start >= TOTAL_TIMEOUT_MS) return false;
     int b = read_byte();
-    if (b < 0 || millis() - start >= TOTAL_TIMEOUT_MS) return false;
-    window[j] = (char)b;
+    if (b < 0) continue;  // timeout on this byte — retry within the budget
+    window[j++] = (char)b;
   }
 
   while (millis() - start < TOTAL_TIMEOUT_MS) {
     int b = read_byte();
-    if (b < 0) return false;
+    if (b < 0) continue;  // inter-sentence gap — retry within the 5 s budget
 
     for (uint8_t j = 0; j < HEADER_LEN - 1; j++) window[j] = window[j + 1];
     window[HEADER_LEN - 1] = (char)b;
@@ -154,6 +165,29 @@ bool Gps1818mk::get_header(const char* header) {
   return false;
 }
 
+bool Gps1818mk::read_sentence(char* buf, uint16_t len, const char* caller) {
+  // The 6-char NMEA header (e.g. "$GPGGA") is always followed by a comma.
+  // Consume that comma first, then read until the CRLF line terminator.
+  if (read_byte() < 0) return false;
+
+  bool found_end = false;
+  for (uint16_t i = 0; i < len - 1; i++) {
+    int b = read_byte();
+    if (b < 0) {
+      Serial.print(caller); Serial.println(": read timeout");
+      return false;
+    }
+    buf[i] = (char)b;
+    if (i > 0 && buf[i - 1] == '\r' && buf[i] == '\n') { found_end = true; break; }
+  }
+
+  if (!found_end) {
+    Serial.print(caller); Serial.println(": sentence too long or missing terminator");
+    return false;
+  }
+  return true;
+}
+
 bool Gps1818mk::parse_gpgga(float* lat, float* lon, float* alt) {
   /*
    * GPGGA fields after "$GPGGA,":
@@ -162,24 +196,9 @@ bool Gps1818mk::parse_gpgga(float* lat, float* lon, float* alt) {
    * Fix: 0 = no fix, 1 = GPS, 2 = DGPS
    */
 
-  // "$GPGGA" is immediately followed by a comma before the data fields
-  if (read_byte() < 0) return false;
-
   const uint16_t BUF_LEN = 128;
   char raw[BUF_LEN] = {0};
-  bool found_end = false;
-
-  for (uint16_t i = 0; i < BUF_LEN - 1; i++) {
-    int b = read_byte();
-    if (b < 0) { Serial.println("parse_gpgga: read timeout"); return false; }
-    raw[i] = (char)b;
-    if (i > 0 && raw[i - 1] == '\r' && raw[i] == '\n') { found_end = true; break; }
-  }
-
-  if (!found_end) {
-    Serial.println("parse_gpgga: sentence too long or missing terminator");
-    return false;
-  }
+  if (!read_sentence(raw, BUF_LEN, "parse_gpgga")) return false;
 
   float utc_time = 0, lat_raw = 0, lon_raw = 0, msl_alt = 0, hdop = 0, geoid = 0;
   int   fix_quality = 0, sat_num = 0;
@@ -210,24 +229,9 @@ bool Gps1818mk::parse_gprmc(float* velocity, float* heading) {
    * Status: 'A' = valid fix, 'V' = void (no fix)
    */
 
-  // "$GPRMC" is immediately followed by a comma before the data fields
-  if (read_byte() < 0) return false;
-
   const uint16_t BUF_LEN = 128;
   char raw[BUF_LEN] = {0};
-  bool found_end = false;
-
-  for (uint16_t i = 0; i < BUF_LEN - 1; i++) {
-    int b = read_byte();
-    if (b < 0) { Serial.println("parse_gprmc: read timeout"); return false; }
-    raw[i] = (char)b;
-    if (i > 0 && raw[i - 1] == '\r' && raw[i] == '\n') { found_end = true; break; }
-  }
-
-  if (!found_end) {
-    Serial.println("parse_gprmc: sentence too long or missing terminator");
-    return false;
-  }
+  if (!read_sentence(raw, BUF_LEN, "parse_gprmc")) return false;
 
   float utc_time = 0, lat_raw = 0, lon_raw = 0, speed_kt = 0, course = 0;
   char  status = 0, lat_dir = 0, lon_dir = 0, date[7] = {0};
@@ -238,7 +242,7 @@ bool Gps1818mk::parse_gprmc(float* velocity, float* heading) {
          &lon_raw, &lon_dir,
          &speed_kt, &course, date);
 
-  if (status == 'V') return false;
+  if (status != 'A') return false;  // 'A' = active/valid, 'V' = void; anything else is malformed
 
   const float KNOT_TO_MPS = 0.514444f;  // 1 knot = 0.514444 m/s
   *velocity = speed_kt * KNOT_TO_MPS;

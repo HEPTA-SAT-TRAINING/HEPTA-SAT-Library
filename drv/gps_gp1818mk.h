@@ -69,9 +69,11 @@ class Gps1818mk {
     pin_size_t _tx_pin;
     SoftwareSerial* _serial = nullptr;
 
-    int  read_byte(void);              // Returns one byte, or -1 on 200 ms timeout
-    bool wait_serial(void);            // Returns false if no data within 1 second
-    bool get_header(const char* header); // Sliding-window search for 6-char NMEA header
+    int  read_byte(void);                            // Returns one byte, or -1 on 200 ms timeout
+    bool wait_serial(void);                          // Returns false if no data within 1 second
+    bool get_header(const char* header);             // Sliding-window search for 6-char NMEA header
+    bool read_sentence(char* buf, uint16_t len,
+                       const char* caller);          // Skip comma, read until CRLF into buf
     bool parse_gpgga(float* lat, float* lon, float* alt);
     bool parse_gprmc(float* velocity, float* heading);
 };

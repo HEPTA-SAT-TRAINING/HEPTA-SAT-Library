@@ -16,12 +16,18 @@
 
 
 bool CameraC1098::begin(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size) {
-  // Skip re-initialization if the camera has already been set up.
-  // The baud rate is fixed to 115200 after the first successful init.
+  // Skip full re-initialization if the camera is already set up with the same config.
+  // If baud_rate or size differ from the stored values, invalidate and re-sync so
+  // the new parameters are actually applied (the camera must be re-INITIALized).
   if (_is_setup_fin) {
-    CAM_SERIAL.begin(115200);
-    while (CAM_SERIAL.available()) CAM_SERIAL.read();
-    return true;
+    if (baud_rate != _baud_rate || size != _jpeg_size) {
+      Serial.println("begin: config changed — re-syncing camera");
+      invalidate();  // _is_setup_fin = false; fall through to full init below
+    } else {
+      CAM_SERIAL.begin(115200);
+      while (CAM_SERIAL.available()) CAM_SERIAL.read();
+      return true;
+    }
   }
 
   // --- Step 1: Sync ---
@@ -76,6 +82,8 @@ bool CameraC1098::begin(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size) {
   Serial.println("Set Package Size OK");
 
   _is_setup_fin = true;
+  _baud_rate    = baud_rate;
+  _jpeg_size    = size;
   return true;
 }
 
@@ -102,6 +110,13 @@ uint32_t CameraC1098::take_picture(void) {
 
 uint16_t CameraC1098::get_packet_size(void) {
   return PACKET_LEN;
+}
+
+void CameraC1098::invalidate(void) {
+  // Mark the driver as uninitialized so the next begin() call re-runs the full
+  // SYNC + INITIAL sequence.  Required after a camera power-cycle because the
+  // camera hardware resets to 14400 baud and must be re-synced.
+  _is_setup_fin = false;
 }
 
 // Packet structure (fixed PACKET_LEN bytes total):

@@ -82,10 +82,22 @@ class CameraC1098 {
      */
     int get_image_data_packet(uint8_t *buf, size_t max_size);
 
+    /**
+     * @brief Invalidate the setup state so that the next begin() call performs
+     *        a full SYNC + INITIAL sequence at 14400 baud.
+     *
+     * Call this after power-cycling the camera (e.g. via HeptaEps::switch_3V3_off()
+     * followed by switch_3V3_on()) to ensure the driver re-syncs with the camera
+     * hardware instead of assuming it is already initialized.
+     */
+    void invalidate(void);
+
   private:
     const uint16_t PACKET_LEN = 512;
-    bool _is_setup_fin = false;
-    uint32_t _data_len = 0;
+    bool            _is_setup_fin = false;
+    C1098_BAUD_RATE _baud_rate    = C1098_BAUD_RATE_115200;  // baud rate set by last successful begin()
+    C1098_JPEG_SIZE _jpeg_size    = C1098_JPEG_SIZE_VGA;     // JPEG size set by last successful begin()
+    uint32_t _data_len    = 0;
     uint16_t _pkg_counter = 0;   // Package ID counter incremented with each received packet
 
     // command

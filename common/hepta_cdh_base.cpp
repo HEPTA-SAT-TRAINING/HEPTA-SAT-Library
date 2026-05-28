@@ -251,6 +251,10 @@ char HeptaCdhBase::get_command(void) {
 }
 
 bool HeptaCdhBase::command_execute(cmd_t cmd, cmd_arg_t arg) {
-
-  return true; // Return 0 to indicate success
+  // Base implementation is a no-op stub. Override in a subclass to handle
+  // board-specific commands. Returns true (success) by default so callers
+  // can test the return value without crashing if no override is present.
+  (void)cmd;
+  (void)arg;
+  return true;
 }

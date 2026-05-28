@@ -36,7 +36,7 @@ class HeptaCdhBase {
     size_t write(const uint8_t *buffer, size_t size);
     bool is_cmd_received(void);
     char get_command(void);
-    bool command_execute(cmd_t cmd, cmd_arg_t arg = 0);
+    virtual bool command_execute(cmd_t cmd, cmd_arg_t arg = 0);
 
     bool sd_begin(void);
     bool sd_is_available(void) const;
