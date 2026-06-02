@@ -70,9 +70,9 @@ bool CameraC1098::begin(C1098_BAUD_RATE baud_rate, C1098_JPEG_SIZE size) {
   }
 
   // --- Step 3: Set packet size ---
-  // Switch to the higher baud rate negotiated in Step 2, then configure
-  // the packet size used for image transfer.
-  CAM_SERIAL.begin(115200);
+  // Switch the host UART to the baud rate negotiated in Step 2 (the camera was
+  // moved to it by INITIAL), then configure the packet size used for transfer.
+  CAM_SERIAL.begin(_baud_to_bps(baud_rate));
   bool packet_set_ok = _set_package_size(PACKET_LEN);
   if (!packet_set_ok) {
     Serial.println("Set Package Size failed");
@@ -127,91 +127,95 @@ int CameraC1098::get_image_data_packet(uint8_t *buf, size_t max_size) {
     return 0;
   }
 
-  // Datasheet 8.1.2: request the next packet by sending an ACK with the package ID
-  // AA 0E 00 00 [pkg_L] [pkg_H]  (package ID in little-endian order)
-  {
+  const uint32_t timeout_ms   = 500;
+  const uint8_t  MAX_PKT_RETRY = 3;
+
+  // Packet layout: [ID_L][ID_H][DataSize_L][DataSize_H][ImageData×DataSize][Verify×2]
+  //   Normal packet : DataSize = PACKET_LEN-6 = 506  -> total 512 bytes
+  //   Last packet   : DataSize < 506                 -> total DataSize+6 bytes (< 512)
+  // The verify code is the low byte of the sum of every byte except the verify
+  // field (datasheet p.5). On a mismatch we re-request the SAME package ID, which
+  // makes the camera resend that packet (datasheet 8.1.2) — so a corrupted packet
+  // is recovered without restarting the whole transfer.
+  for (uint8_t attempt = 0; attempt < MAX_PKT_RETRY; attempt++) {
+    // Request package _pkg_counter: AA 0E 00 00 [pkg_L] [pkg_H] (ID little-endian).
     uint8_t param[MAX_PARAM_NUM] = {
       0x00, 0x00,
       (uint8_t)(_pkg_counter & 0xFF),
       (uint8_t)((_pkg_counter >> 8) & 0xFF)
     };
     _send_cmd(C1098_CMD_ACK, param);
-  }
 
-  const uint32_t timeout_ms = 500;
+    uint32_t sum = 0;
 
-  // Step 1: Read the 4-byte header to determine DataSize.
-  // Packet layout: [ID_L][ID_H][DataSize_L][DataSize_H][ImageData×DataSize][Verify×2]
-  // Datasheet note: "the last packet size varies depending on the image size"
-  //   Normal packet : DataSize = PACKET_LEN-6 = 506  -> total 512 bytes
-  //   Last packet   : DataSize < 506                 -> total DataSize+6 bytes (< 512)
-  uint8_t header[4];
-  for (uint8_t i = 0; i < 4; i++) {
-    uint32_t start = millis();
-    while (!CAM_SERIAL.available()) {
-      if (millis() - start > timeout_ms) {
-        Serial.println("Timeout waiting for packet header");
-        return -1;
-      }
+    // Step 1: header (ID + DataSize)
+    uint8_t header[4];
+    bool io_ok = true;
+    for (uint8_t i = 0; i < 4; i++) {
+      if (!_read_byte(&header[i], timeout_ms)) { io_ok = false; break; }
+      sum += header[i];
     }
-    header[i] = CAM_SERIAL.read();
-  }
+    if (!io_ok) { Serial.println("Timeout waiting for packet header"); return -1; }
 
-  uint16_t data_size = (uint16_t)header[2] | ((uint16_t)header[3] << 8);
-
-  if (data_size == 0 || data_size > PACKET_LEN - 6) {
-    Serial.print("Invalid packet data_size: ");
-    Serial.println(data_size);
-    return -1;
-  }
-  if (max_size < data_size) {
-    Serial.println("Output buffer too small");
-    return -1;
-  }
-
-  // Clamp to remaining byte count for the last packet
-  uint16_t bytes_to_write = (data_size > _data_len)
-                              ? (uint16_t)_data_len
-                              : data_size;
-
-  // Step 2: Receive DataSize bytes of image data and copy them into the buffer
-  for (uint16_t i = 0; i < data_size; i++) {
-    uint32_t start = millis();
-    while (!CAM_SERIAL.available()) {
-      if (millis() - start > timeout_ms) {
-        Serial.println("Timeout waiting for image data");
-        return -1;
-      }
+    uint16_t data_size = (uint16_t)header[2] | ((uint16_t)header[3] << 8);
+    if (data_size == 0 || data_size > PACKET_LEN - 6) {
+      Serial.print("Invalid packet data_size: ");
+      Serial.println(data_size);
+      while (CAM_SERIAL.available()) CAM_SERIAL.read();
+      continue;  // framing/garbage — flush and re-request same ID
     }
-    uint8_t b = CAM_SERIAL.read();
-    if (i < bytes_to_write) {
-      buf[i] = b;
+    if (max_size < data_size) {
+      Serial.println("Output buffer too small");
+      return -1;
     }
-  }
 
-  // Step 3: Read and discard the 2 verify bytes
-  for (uint8_t i = 0; i < 2; i++) {
-    uint32_t start = millis();
-    while (!CAM_SERIAL.available()) {
-      if (millis() - start > timeout_ms) {
-        Serial.println("Timeout waiting for verify bytes");
-        return -1;
-      }
+    // Clamp to remaining byte count for the last packet
+    uint16_t bytes_to_write = (data_size > _data_len)
+                                ? (uint16_t)_data_len
+                                : data_size;
+
+    // Step 2: image data (checksum over ALL received bytes, store the kept ones)
+    for (uint16_t i = 0; i < data_size; i++) {
+      uint8_t b;
+      if (!_read_byte(&b, timeout_ms)) { io_ok = false; break; }
+      sum += b;
+      if (i < bytes_to_write) buf[i] = b;
     }
-    CAM_SERIAL.read();
+    if (!io_ok) { Serial.println("Timeout waiting for image data"); return -1; }
+
+    // Step 3: 2 verify bytes (low byte = checksum, high byte always 0)
+    uint8_t verify[2];
+    for (uint8_t i = 0; i < 2; i++) {
+      if (!_read_byte(&verify[i], timeout_ms)) { io_ok = false; break; }
+    }
+    if (!io_ok) { Serial.println("Timeout waiting for verify bytes"); return -1; }
+
+    if ((uint8_t)(sum & 0xFF) != verify[0]) {
+      Serial.print("Packet verify mismatch id=");
+      Serial.print(_pkg_counter);
+      Serial.print(" got=0x");
+      Serial.print(verify[0], HEX);
+      Serial.print(" calc=0x");
+      Serial.println((uint8_t)(sum & 0xFF), HEX);
+      while (CAM_SERIAL.available()) CAM_SERIAL.read();
+      continue;  // re-request the same package ID
+    }
+
+    // Packet good: advance state.
+    _pkg_counter++;
+    _data_len -= bytes_to_write;
+
+    // After all data has been received, send the final ACK 0xF0F0 (datasheet p.7)
+    if (_data_len == 0) {
+      uint8_t final_param[MAX_PARAM_NUM] = {0x00, 0x00, 0xF0, 0xF0};
+      _send_cmd(C1098_CMD_ACK, final_param);
+      Serial.println("Transfer complete, sent F0F0 ACK");
+    }
+    return (int)bytes_to_write;
   }
 
-  _pkg_counter++;
-  _data_len -= bytes_to_write;
-
-  // After all data has been received, send the final ACK 0xF0F0 (datasheet p.7)
-  if (_data_len == 0) {
-    uint8_t final_param[MAX_PARAM_NUM] = {0x00, 0x00, 0xF0, 0xF0};
-    _send_cmd(C1098_CMD_ACK, final_param);
-    Serial.println("Transfer complete, sent F0F0 ACK");
-  }
-
-  return (int)bytes_to_write;
+  Serial.println("Packet retry exhausted");
+  return -1;
 }
 
 /* ---------------------------------------------------------------
@@ -263,41 +267,22 @@ bool CameraC1098::_set_package_size(uint16_t size) {
   return _is_ack_ok();
 }
 
-bool CameraC1098::_reset(void) {
-  uint8_t param[MAX_PARAM_NUM] = {0};
-
-  _send_cmd(C1098_CMD_RESET, param);
-
-  // delay needed before reading ack
-  delay(20);
-  if(!_is_ack_ok()) {
-    Serial.println("Reset failed");
-    return false;
-  } else {
-    Serial.println("Reset OK");
-    return true;
-  }
-}
-
 uint32_t CameraC1098::_data_length(void){
-  const uint32_t timeout_ms = 500;
-  uint32_t start = millis();
-  while (CAM_SERIAL.available() < CMD_PACKET_LEN) {
-    if (millis() - start > timeout_ms) {
-      Serial.println("_data_length timeout");
-      return 0;
-    }
-  }
-
   uint8_t buf[CMD_PACKET_LEN] = {0};
-  for(uint8_t i = 0; i < CMD_PACKET_LEN; i++) {
-    buf[i] = _get_data();
+  if (!_read_cmd_packet(buf, 500)) {
+    Serial.println("_data_length timeout");
+    return 0;
   }
 
   // Datasheet p.8: DATA LENGTH packet format
   //   AA  0A  01  [Byte0=LSB]  [Byte1]  [Byte2=MSB]
   //   [0] [1] [2]     [3]        [4]       [5]
   // Example: AA 0A 01 90 22 00 -> size = 0x90 | (0x22<<8) | (0x00<<16) = 0x002290 = 8848
+  if (buf[1] != C1098_CMD_DATA_LEN) {
+    Serial.print("_data_length: unexpected frame id=0x");
+    Serial.println(buf[1], HEX);
+    return 0;
+  }
   return (uint32_t)buf[3] | ((uint32_t)buf[4] << 8) | ((uint32_t)buf[5] << 16);
 }
 
@@ -318,51 +303,24 @@ void CameraC1098::_send_ack(void) {
 }
 
 bool CameraC1098::_is_ack_ok(void) {
-  const uint32_t timeout_ms = 100;
-  uint32_t start = millis();
-  while (CAM_SERIAL.available() < CMD_PACKET_LEN) {
-    if (millis() - start > timeout_ms) {
-      Serial.print("[DBG] _is_ack_ok timeout, available=");
-      Serial.println(CAM_SERIAL.available());
-      // Discard partial / stale bytes so they don't pollute the next call.
-      while (CAM_SERIAL.available()) CAM_SERIAL.read();
-      return false;
-    }
-  }
-
   uint8_t buf[CMD_PACKET_LEN] = {0};
-  for(uint8_t i = 0; i < CMD_PACKET_LEN; i++) {
-    buf[i] = CAM_SERIAL.read();
+  if (!_read_cmd_packet(buf, 100)) {
+    Serial.println("[DBG] _is_ack_ok timeout / no frame");
+    // Discard partial / stale bytes so they don't pollute the next call.
+    while (CAM_SERIAL.available()) CAM_SERIAL.read();
+    return false;
   }
-  if(buf[1] == C1098_CMD_ACK) {
-    return true;
-  }
-
-  return false;
+  return buf[1] == C1098_CMD_ACK;
 }
 
 bool CameraC1098::_is_sync_ok(void) {
-  const uint32_t timeout_ms = 100;
-  uint32_t start = millis();
-  while (CAM_SERIAL.available() < CMD_PACKET_LEN) {
-    if (millis() - start > timeout_ms) {
-      Serial.println("serial not available");
-      while (CAM_SERIAL.available()) CAM_SERIAL.read();
-      return false;
-    }
-  }
-
   uint8_t buf[CMD_PACKET_LEN] = {0};
-  Serial.println("is_sync_ok");
-  for(uint8_t i = 0; i < CMD_PACKET_LEN; i++) {
-    buf[i] = CAM_SERIAL.read();
-    Serial.print(buf[i], HEX);
+  if (!_read_cmd_packet(buf, 100)) {
+    Serial.println("serial not available");
+    while (CAM_SERIAL.available()) CAM_SERIAL.read();
+    return false;
   }
-  if(buf[1] == C1098_CMD_SYNC) {
-    return true;
-  }
-
-  return false;
+  return buf[1] == C1098_CMD_SYNC;
 }
 
 
@@ -375,6 +333,45 @@ void CameraC1098::_send_cmd(C1098_CMD cmd, uint8_t param[]) {
   }
 }
 
-uint8_t CameraC1098::_get_data(void) {
-  return CAM_SERIAL.read();
+long CameraC1098::_baud_to_bps(C1098_BAUD_RATE baud) {
+  switch (baud) {
+    case C1098_BAUD_RATE_14400:  return 14400;
+    case C1098_BAUD_RATE_28800:  return 28800;
+    case C1098_BAUD_RATE_57600:  return 57600;
+    case C1098_BAUD_RATE_115200: return 115200;
+    case C1098_BAUD_RATE_230400: return 230400;
+    case C1098_BAUD_RATE_460800: return 460800;
+    default:                     return 115200;
+  }
+}
+
+bool CameraC1098::_read_byte(uint8_t *out, uint32_t timeout_ms) {
+  uint32_t start = millis();
+  while (!CAM_SERIAL.available()) {
+    if (millis() - start > timeout_ms) return false;
+  }
+  *out = CAM_SERIAL.read();
+  return true;
+}
+
+bool CameraC1098::_read_cmd_packet(uint8_t *buf, uint32_t timeout_ms) {
+  uint32_t start = millis();
+
+  // Hunt for the 0xAA start byte, discarding any leading noise/garbage. This
+  // prevents a single stray byte from permanently offsetting the 6-byte framing.
+  for (;;) {
+    if (millis() - start > timeout_ms) return false;
+    uint8_t b;
+    if (!_read_byte(&b, timeout_ms)) return false;
+    if (b == CMD_START_BYTE) {
+      buf[0] = b;
+      break;
+    }
+  }
+
+  // Read the remaining 5 bytes of the command frame.
+  for (uint8_t i = 1; i < CMD_PACKET_LEN; i++) {
+    if (!_read_byte(&buf[i], timeout_ms)) return false;
+  }
+  return true;
 }

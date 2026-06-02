@@ -105,7 +105,6 @@ class CameraC1098 {
     bool _get_picture(void);
     bool _snapshot(void);
     bool _set_package_size(uint16_t size);
-    bool _reset(void);
     uint32_t _data_length(void);
     bool _sync(void);
     void _send_ack(void);        // Send a command ACK packet: AA 0E 00 00 00 00
@@ -114,7 +113,15 @@ class CameraC1098 {
     bool _is_sync_ok(void);
 
     void _send_cmd(C1098_CMD cmd, uint8_t param[]);
-    uint8_t _get_data(void);
+
+    // Map an interface-speed code to the actual UART bit rate (bps).
+    static long _baud_to_bps(C1098_BAUD_RATE baud);
+    // Read a single byte with timeout. Returns false on timeout.
+    bool _read_byte(uint8_t *out, uint32_t timeout_ms);
+    // Read a 6-byte command frame, hunting for the 0xAA start byte first so a
+    // stray/noise byte cannot permanently desync the 6-byte framing. Returns
+    // false on timeout / no frame.
+    bool _read_cmd_packet(uint8_t *buf, uint32_t timeout_ms);
 };
 
 #endif /* CAMERA_C1098 */
