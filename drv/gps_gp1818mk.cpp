@@ -29,32 +29,20 @@ void Gps1818mk::begin(void) {
   }
 }
 
-void Gps1818mk::read_raw(void) {
-  if (!_serial) return;
-  const uint32_t TIMEOUT_MS = 5000;
-  uint32_t start = millis();
-  while (millis() - start < TIMEOUT_MS) {
-    if (_serial->available()) {
-      Serial.write((char)_serial->read());
-    }
-  }
+int Gps1818mk::read_byte(void) {
+  if (!_serial || !_serial->available()) return -1;
+  return _serial->read();
 }
 
 bool Gps1818mk::get_position(float* lat, float* lon, float* alt) {
-  if (!wait_serial())           return false;
-  if (!get_header("$GPGGA")) {
-    Serial.println("get_position: GPGGA header not found");
-    return false;
-  }
+  if (!wait_serial())        return false;
+  if (!get_header("$GPGGA")) return false;
   return parse_gpgga(lat, lon, alt);
 }
 
 bool Gps1818mk::get_velocity(float* velocity, float* heading) {
-  if (!wait_serial())           return false;
-  if (!get_header("$GPRMC")) {
-    Serial.println("get_velocity: GPRMC header not found");
-    return false;
-  }
+  if (!wait_serial())        return false;
+  if (!get_header("$GPRMC")) return false;
   return parse_gprmc(velocity, heading);
 }
 
@@ -70,17 +58,11 @@ bool Gps1818mk::get_all(float* lat, float* lon, float* alt,
   // separately in that case.
 
   // GPGGA: position + altitude
-  if (!get_header("$GPGGA")) {
-    Serial.println("get_all: GPGGA header not found");
-    return false;
-  }
+  if (!get_header("$GPGGA"))       return false;
   if (!parse_gpgga(lat, lon, alt)) return false;
 
   // GPRMC: velocity + heading (arrives after GPGGA in the same cycle)
-  if (!get_header("$GPRMC")) {
-    Serial.println("get_all: GPRMC header not found");
-    return false;
-  }
+  if (!get_header("$GPRMC"))       return false;
   return parse_gprmc(velocity, heading);
 }
 
@@ -88,29 +70,14 @@ bool Gps1818mk::is_data_available(void) {
   return _serial && _serial->available();
 }
 
-void Gps1818mk::test_gps(void) {
-  float lat, lon, alt;
-  begin();
-  if (get_position(&lat, &lon, &alt)) {
-    Serial.println("-------------------");
-    Serial.print("Lat: "); Serial.println(lat, 6);
-    Serial.print("Lon: "); Serial.println(lon, 6);
-    Serial.print("Alt: "); Serial.println(alt, 1);
-    Serial.println("-------------------");
-  } else {
-    Serial.println("test_gps: failed to get a valid position fix");
-  }
-}
-
-int Gps1818mk::read_byte(void) {
+int Gps1818mk::read_byte_timeout(void) {
   if (!_serial) return -1;
   const uint32_t TIMEOUT_MS = 200;
   uint32_t start = millis();
   while (millis() - start < TIMEOUT_MS) {
     if (_serial->available()) return _serial->read();
   }
-  Serial.println("read_byte: timeout");
-  return -1;
+  return -1;  // timeout — caller (get_header/read_sentence) treats this as failure
 }
 
 bool Gps1818mk::wait_serial(void) {
@@ -121,7 +88,6 @@ bool Gps1818mk::wait_serial(void) {
     if (_serial->available()) return true;
     delay(1);
   }
-  Serial.println("wait_serial: timeout. Please check the GPS connection.");
   return false;
 }
 
@@ -139,17 +105,17 @@ bool Gps1818mk::get_header(const char* header) {
   uint32_t start                  = millis();
 
   // Pre-fill the first HEADER_LEN-1 bytes of the window.
-  // Use index-advance-on-success so inter-sentence gaps (read_byte() == -1) are retried
+  // Use index-advance-on-success so inter-sentence gaps (read_byte_timeout() == -1) are retried
   // without consuming a slot in the window.
   for (uint8_t j = 0; j < HEADER_LEN - 1; ) {
     if (millis() - start >= TOTAL_TIMEOUT_MS) return false;
-    int b = read_byte();
+    int b = read_byte_timeout();
     if (b < 0) continue;  // timeout on this byte — retry within the budget
     window[j++] = (char)b;
   }
 
   while (millis() - start < TOTAL_TIMEOUT_MS) {
-    int b = read_byte();
+    int b = read_byte_timeout();
     if (b < 0) continue;  // inter-sentence gap — retry within the 5 s budget
 
     for (uint8_t j = 0; j < HEADER_LEN - 1; j++) window[j] = window[j + 1];
@@ -165,26 +131,20 @@ bool Gps1818mk::get_header(const char* header) {
   return false;
 }
 
-bool Gps1818mk::read_sentence(char* buf, uint16_t len, const char* caller) {
+bool Gps1818mk::read_sentence(char* buf, uint16_t len) {
   // The 6-char NMEA header (e.g. "$GPGGA") is always followed by a comma.
   // Consume that comma first, then read until the CRLF line terminator.
-  if (read_byte() < 0) return false;
+  if (read_byte_timeout() < 0) return false;
 
   bool found_end = false;
   for (uint16_t i = 0; i < len - 1; i++) {
-    int b = read_byte();
-    if (b < 0) {
-      Serial.print(caller); Serial.println(": read timeout");
-      return false;
-    }
+    int b = read_byte_timeout();
+    if (b < 0) return false;  // read timeout
     buf[i] = (char)b;
     if (i > 0 && buf[i - 1] == '\r' && buf[i] == '\n') { found_end = true; break; }
   }
 
-  if (!found_end) {
-    Serial.print(caller); Serial.println(": sentence too long or missing terminator");
-    return false;
-  }
+  if (!found_end) return false;  // sentence too long or missing terminator
   return true;
 }
 
@@ -198,7 +158,7 @@ bool Gps1818mk::parse_gpgga(float* lat, float* lon, float* alt) {
 
   const uint16_t BUF_LEN = 128;
   char raw[BUF_LEN] = {0};
-  if (!read_sentence(raw, BUF_LEN, "parse_gpgga")) return false;
+  if (!read_sentence(raw, BUF_LEN)) return false;
 
   float utc_time = 0, lat_raw = 0, lon_raw = 0, msl_alt = 0, hdop = 0, geoid = 0;
   int   fix_quality = 0, sat_num = 0;
@@ -231,7 +191,7 @@ bool Gps1818mk::parse_gprmc(float* velocity, float* heading) {
 
   const uint16_t BUF_LEN = 128;
   char raw[BUF_LEN] = {0};
-  if (!read_sentence(raw, BUF_LEN, "parse_gprmc")) return false;
+  if (!read_sentence(raw, BUF_LEN)) return false;
 
   float utc_time = 0, lat_raw = 0, lon_raw = 0, speed_kt = 0, course = 0;
   char  status = 0, lat_dir = 0, lon_dir = 0, date[7] = {0};

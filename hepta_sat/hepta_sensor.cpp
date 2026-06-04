@@ -4,6 +4,35 @@
 #include <SD.h>
 
 
+bool HeptaSensor::begin(void) {
+  // Run the shared sensor init (ADC resolution, temp pin, BNO055) first,
+  // then bring up the GPS SoftwareSerial port.
+  bool ok = HeptaSensorBase::begin();
+  gps.begin();
+  return ok;
+}
+
+bool HeptaSensor::gps_get_position(float* lat, float* lon, float* alt) {
+  return gps.get_position(lat, lon, alt);
+}
+
+bool HeptaSensor::gps_get_velocity(float* velocity, float* heading) {
+  return gps.get_velocity(velocity, heading);
+}
+
+bool HeptaSensor::gps_get_all(float* lat, float* lon, float* alt,
+                              float* velocity, float* heading) {
+  return gps.get_all(lat, lon, alt, velocity, heading);
+}
+
+bool HeptaSensor::gps_is_data_available(void) {
+  return gps.is_data_available();
+}
+
+int HeptaSensor::gps_read_byte(void) {
+  return gps.read_byte();
+}
+
 float HeptaSensor::get_temperature(void) {
   // resistance [Ω]
   const float R3  = 110.0f;

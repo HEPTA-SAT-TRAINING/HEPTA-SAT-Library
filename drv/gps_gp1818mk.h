@@ -27,8 +27,13 @@ class Gps1818mk {
     /** @brief Initialize the SoftwareSerial port at 9600 baud. Call once in setup(). */
     void begin(void);
 
-    /** @brief Print raw NMEA sentences to Serial for 5 seconds (debug use only). */
-    void read_raw(void);
+    /**
+     * @brief Non-blocking read of one byte from the raw NMEA stream.
+     * @return The next byte (0-255) if one is waiting, or -1 if no data is
+     *         available. Pair with is_data_available() and call repeatedly
+     *         from the sketch loop; the caller decides where to print it.
+     */
+    int read_byte(void);
 
     /**
      * @brief Read latitude, longitude, and altitude from a GPGGA sentence.
@@ -61,19 +66,15 @@ class Gps1818mk {
     /** @brief Return true if at least one byte is waiting in the receive buffer. */
     bool is_data_available(void);
 
-    /** @brief Attempt get_position() and print the result to Serial. */
-    void test_gps(void);
-
   private:
     pin_size_t _rx_pin;
     pin_size_t _tx_pin;
     SoftwareSerial* _serial = nullptr;
 
-    int  read_byte(void);                            // Returns one byte, or -1 on 200 ms timeout
+    int  read_byte_timeout(void);                            // Returns one byte, or -1 on 200 ms timeout
     bool wait_serial(void);                          // Returns false if no data within 1 second
     bool get_header(const char* header);             // Sliding-window search for 6-char NMEA header
-    bool read_sentence(char* buf, uint16_t len,
-                       const char* caller);          // Skip comma, read until CRLF into buf
+    bool read_sentence(char* buf, uint16_t len);     // Skip comma, read until CRLF into buf
     bool parse_gpgga(float* lat, float* lon, float* alt);
     bool parse_gprmc(float* velocity, float* heading);
 };
