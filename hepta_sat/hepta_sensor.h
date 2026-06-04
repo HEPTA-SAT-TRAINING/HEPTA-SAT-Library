@@ -23,6 +23,8 @@ class HeptaSensor : public HeptaSensorBase {
     bool gps_get_velocity(float* velocity, float* heading);
     bool gps_get_all(float* lat, float* lon, float* alt,
                      float* velocity, float* heading);
+    bool gps_get_gpgga(GpggaData* out);
+    bool gps_get_gprmc(GprmcData* out);
     bool gps_is_data_available(void);
     int  gps_read_byte(void);
 

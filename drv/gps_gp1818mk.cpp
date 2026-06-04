@@ -34,16 +34,33 @@ int Gps1818mk::read_byte(void) {
   return _serial->read();
 }
 
-bool Gps1818mk::get_position(float* lat, float* lon, float* alt) {
+bool Gps1818mk::get_gpgga(GpggaData* out) {
   if (!wait_serial())        return false;
   if (!get_header("$GPGGA")) return false;
-  return parse_gpgga(lat, lon, alt);
+  return parse_gpgga(out);
+}
+
+bool Gps1818mk::get_gprmc(GprmcData* out) {
+  if (!wait_serial())        return false;
+  if (!get_header("$GPRMC")) return false;
+  return parse_gprmc(out);
+}
+
+bool Gps1818mk::get_position(float* lat, float* lon, float* alt) {
+  GpggaData d;
+  if (!get_gpgga(&d)) return false;
+  *lat = d.lat;
+  *lon = d.lon;
+  *alt = d.alt;
+  return true;
 }
 
 bool Gps1818mk::get_velocity(float* velocity, float* heading) {
-  if (!wait_serial())        return false;
-  if (!get_header("$GPRMC")) return false;
-  return parse_gprmc(velocity, heading);
+  GprmcData d;
+  if (!get_gprmc(&d)) return false;
+  *velocity = d.velocity;
+  *heading  = d.heading;
+  return true;
 }
 
 bool Gps1818mk::get_all(float* lat, float* lon, float* alt,
@@ -58,12 +75,21 @@ bool Gps1818mk::get_all(float* lat, float* lon, float* alt,
   // separately in that case.
 
   // GPGGA: position + altitude
-  if (!get_header("$GPGGA"))       return false;
-  if (!parse_gpgga(lat, lon, alt)) return false;
+  GpggaData gga;
+  if (!get_header("$GPGGA"))  return false;
+  if (!parse_gpgga(&gga))     return false;
 
   // GPRMC: velocity + heading (arrives after GPGGA in the same cycle)
-  if (!get_header("$GPRMC"))       return false;
-  return parse_gprmc(velocity, heading);
+  GprmcData rmc;
+  if (!get_header("$GPRMC"))  return false;
+  if (!parse_gprmc(&rmc))     return false;
+
+  *lat      = gga.lat;
+  *lon      = gga.lon;
+  *alt      = gga.alt;
+  *velocity = rmc.velocity;
+  *heading  = rmc.heading;
+  return true;
 }
 
 bool Gps1818mk::is_data_available(void) {
@@ -148,7 +174,7 @@ bool Gps1818mk::read_sentence(char* buf, uint16_t len) {
   return true;
 }
 
-bool Gps1818mk::parse_gpgga(float* lat, float* lon, float* alt) {
+bool Gps1818mk::parse_gpgga(GpggaData* out) {
   /*
    * GPGGA fields after "$GPGGA,":
    *   UTC, Lat, N/S, Lon, E/W, Fix, Sats, HDOP, Alt, M, Geoid, M
@@ -170,18 +196,22 @@ bool Gps1818mk::parse_gpgga(float* lat, float* lon, float* alt) {
 
   if (fix_quality == 0) return false;
 
-  *lat = nmea_to_decimal(lat_raw);
-  *lon = nmea_to_decimal(lon_raw);
+  out->utc_time = utc_time;
+  out->lat = nmea_to_decimal(lat_raw);
+  out->lon = nmea_to_decimal(lon_raw);
 
   // South latitude and West longitude are expressed as negative values
-  if (lat_dir == 'S') *lat = -*lat;
-  if (lon_dir == 'W') *lon = -*lon;
+  if (lat_dir == 'S') out->lat = -out->lat;
+  if (lon_dir == 'W') out->lon = -out->lon;
 
-  *alt = msl_alt;
+  out->alt         = msl_alt;
+  out->fix_quality = (uint8_t)fix_quality;
+  out->sat_num     = (uint8_t)sat_num;
+  out->hdop        = hdop;
   return true;
 }
 
-bool Gps1818mk::parse_gprmc(float* velocity, float* heading) {
+bool Gps1818mk::parse_gprmc(GprmcData* out) {
   /*
    * GPRMC fields after "$GPRMC,":
    *   UTC, Status, Lat, N/S, Lon, E/W, Speed(kt), Course(deg), Date, ...
@@ -205,8 +235,10 @@ bool Gps1818mk::parse_gprmc(float* velocity, float* heading) {
   if (status != 'A') return false;  // 'A' = active/valid, 'V' = void; anything else is malformed
 
   const float KNOT_TO_MPS = 0.514444f;  // 1 knot = 0.514444 m/s
-  *velocity = speed_kt * KNOT_TO_MPS;
-  *heading  = course;
+  out->utc_time = utc_time;
+  out->velocity = speed_kt * KNOT_TO_MPS;
+  out->heading  = course;
+  memcpy(out->date, date, sizeof(out->date));
 
   return true;
 }

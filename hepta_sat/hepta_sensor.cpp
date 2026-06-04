@@ -25,6 +25,14 @@ bool HeptaSensor::gps_get_all(float* lat, float* lon, float* alt,
   return gps.get_all(lat, lon, alt, velocity, heading);
 }
 
+bool HeptaSensor::gps_get_gpgga(GpggaData* out) {
+  return gps.get_gpgga(out);
+}
+
+bool HeptaSensor::gps_get_gprmc(GprmcData* out) {
+  return gps.get_gprmc(out);
+}
+
 bool HeptaSensor::gps_is_data_available(void) {
   return gps.is_data_available();
 }
