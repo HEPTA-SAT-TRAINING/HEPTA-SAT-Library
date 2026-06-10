@@ -1,40 +1,58 @@
-# COM &mdash; Communications (XBee)
+# COM - Communications (XBee)
 
-Class: `HeptaLiteCom` ([hepta_sat_lite/hepta_lite_com.h](../../hepta_sat_lite/hepta_lite_com.h)),
-deriving from `HeptaComBase` ([common/hepta_com_base.h](../../common/hepta_com_base.h)).
+Classes:
 
-COM is a thin wrapper over a `SoftwareSerial` port wired to an XBee radio. On the
-Lite board it uses RX pin 15 / TX pin 14.
+- `HeptaCom` for HEPTA-SAT
+- `HeptaLiteCom` for HEPTA-SAT Lite
 
-> **In development.** COM currently ships on the Lite board only; the full
-> HEPTA-SAT board does not have a `HeptaCom` class yet, but one is planned.
-> See [architecture.md](../architecture.md#com-status-in-development).
+Both derive from `HeptaComBase` and use SoftwareSerial RX pin 15 / TX pin 14.
+`HeptaComBase` provides the education-facing API and delegates device-specific
+communication and AT commands to the [`Xbee` driver](../drivers/xbee.md).
+The initial implementation targets XBee AT / Transparent mode.
 
 ## API
 
 | Method | Description |
 |--------|-------------|
-| `void begin(uint16_t baud_rate)` | Start the XBee SoftwareSerial port. |
-| `char get_char(void)` | Receive a single character. |
-| `void send_char(const char c)` | Transmit a single character. |
-| `String get_text(void)` | Receive a line/string. |
-| `void send_text(const String text)` | Transmit a string. |
+| `bool begin(uint16_t baud_rate)` | Start the XBee SoftwareSerial port. |
+| `bool send(const char* text)` | Send a null-terminated string without adding a newline. |
+| `bool send(const uint8_t* data, size_t length)` | Send raw bytes. |
+| `int receive(...)` | Receive bytes, optionally waiting for a timeout. |
+| `int receive_until(...)` | Receive text up to a terminator. |
+| `bool available()` | Return whether at least one byte can be read. |
+| `bool enter_command_mode()` | Enter XBee command mode using the `+++` guard times. |
+| `bool exit_command_mode()` | Send `ATCN` and leave command mode. |
+| `bool send_at_command(...)` | Send an AT command and read its response. |
+| `bool set_transparent_mode(bool save=false)` | Set `AP=0`. |
+| `bool set_api_mode(bool save=false)` | Set `AP=1`; API frames are not implemented. |
+| `const char* last_error()` | Return the most recent error message. |
+
+The legacy `get_char()`, `send_char()`, `get_text()`, and `send_text()` methods
+remain available for existing sketches.
 
 ## Example
 
 ```cpp
-#include <HeptaSatLite.h>
-HeptaLiteCom com;
+#include <HeptaSat.h>
+
+HeptaCom com;
 
 void setup() {
+  Serial.begin(115200);
   com.begin(9600);
-  com.send_text("HEPTA-Sat online");
+  com.send("HEPTA-Sat online\n");
 }
 
 void loop() {
-  String msg = com.get_text();
-  if (msg.length() > 0) {
-    com.send_text("ack: " + msg);
+  char buffer[64];
+  int received = com.receive_until('\n', buffer, sizeof(buffer), 1000);
+
+  if (received > 0) {
+    Serial.println(buffer);
   }
 }
 ```
+
+`set_transparent_mode()` and `set_api_mode()` do not write the setting to
+nonvolatile memory unless `save=true` is passed. API frame transmission and
+reception are not implemented in v0.1.

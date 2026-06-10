@@ -10,9 +10,10 @@ board-specific pin assignments and conversion formulas separate.
                           ▼                            ▼
   board layer        hepta_sat/                  hepta_sat_lite/
   (pins fixed)       HeptaCdh                    HeptaLiteCdh
-                     HeptaEps                    HeptaLiteCom
-                     HeptaSensor                 HeptaLiteEps
-                          │                      HeptaLiteSensor
+                     HeptaCom                    HeptaLiteCom
+                     HeptaEps                    HeptaLiteEps
+                     HeptaSensor                 HeptaLiteSensor
+                          │                            │
                           └────────────┬───────────────┘
                                        ▼
   base layer                       common/
@@ -20,7 +21,7 @@ board-specific pin assignments and conversion formulas separate.
                                        │
                                        ▼
   driver layer                       drv/
-                   AdcMcp3208 · CameraC1098 · Gps1818mk · Bno055 · UnitRoller
+             AdcMcp3208 · CameraC1098 · Gps1818mk · Bno055 · Xbee · UnitRoller
 ```
 
 ## Layer responsibilities
@@ -47,7 +48,8 @@ through a board subclass.
 ### Driver layer (`drv/`)
 Self-contained drivers for individual chips/modules. They know nothing about
 HEPTA-SAT; they just talk to hardware (SPI/I2C/UART). Base and board classes
-compose them (e.g. `HeptaSensor` owns a `CameraC1098` and a `Gps1818mk`).
+compose them (e.g. `HeptaSensor` owns a `CameraC1098` and a `Gps1818mk`, while
+`HeptaComBase` owns an `Xbee`).
 
 ## Why this shape
 
@@ -56,9 +58,9 @@ compose them (e.g. `HeptaSensor` owns a `CameraC1098` and a `Gps1818mk`).
   the board layer; no logic changes.
 - **Drivers are reusable and testable in isolation** from the satellite stack.
 
-## COM status (in development)
+## COM
 
-COM is **still in development**. Today [HeptaSat.h](../HeptaSat.h) only includes
-CDH, EPS, and Sensor, and COM ships on the Lite board only (`HeptaLiteCom`). A
-full-board `HeptaCom` is **planned**: it would live in `hepta_sat/hepta_com.h`
-and derive from `HeptaComBase`, mirroring the Lite class with full-board pins.
+Both boards expose the shared education-facing API in `HeptaComBase`.
+`HeptaCom` and `HeptaLiteCom` fix the board wiring to SoftwareSerial RX pin 15
+and TX pin 14. `HeptaComBase` delegates UART communication, XBee command mode,
+and AT commands to the `Xbee` driver in `drv/`.

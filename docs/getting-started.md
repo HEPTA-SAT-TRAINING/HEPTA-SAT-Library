@@ -24,7 +24,7 @@ Include **one** entry header, matching your hardware:
 
 | Board | Include | Classes |
 |-------|---------|---------|
-| HEPTA-SAT (full) | `#include <HeptaSat.h>` | `HeptaCdh`, `HeptaEps`, `HeptaSensor` |
+| HEPTA-SAT (full) | `#include <HeptaSat.h>` | `HeptaCdh`, `HeptaCom`, `HeptaEps`, `HeptaSensor` |
 | HEPTA-SAT Lite   | `#include <HeptaSatLite.h>` | `HeptaLiteCdh`, `HeptaLiteCom`, `HeptaLiteEps`, `HeptaLiteSensor` |
 
 Do not include both headers, and do not mix classes from different boards &mdash;

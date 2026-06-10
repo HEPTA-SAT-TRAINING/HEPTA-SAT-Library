@@ -16,13 +16,58 @@ automatically.
 | Subsystem | What it does | HEPTA-SAT | HEPTA-SAT Lite |
 |-----------|--------------|:---------:|:--------------:|
 | **CDH**    | SD card, serial logging, command handling | `HeptaCdh` | `HeptaLiteCdh` |
-| **COM**    | XBee telemetry over SoftwareSerial         | &mdash;¹   | `HeptaLiteCom` |
+| **COM**    | XBee telemetry over SoftwareSerial         | `HeptaCom` | `HeptaLiteCom` |
 | **EPS**    | Battery / rail voltages, current sense     | `HeptaEps` | `HeptaLiteEps` |
-| **Sensor** | BNO055 IMU, temperature, GPS, camera²      | `HeptaSensor` | `HeptaLiteSensor` |
+| **Sensor** | BNO055 IMU, temperature, GPS, camera¹      | `HeptaSensor` | `HeptaLiteSensor` |
 
-¹ COM is still in development. It currently ships on the Lite board only
-(`HeptaLiteCom`); a full-board `HeptaCom` is planned.
-² GPS (GP-1818MK) and camera (C1098) are only wired on the full `HeptaSensor`.
+¹ GPS (GP-1818MK) and camera (C1098) are only wired on the full `HeptaSensor`.
+
+## XBee communication
+
+HeptaCom v0.1 is a high-level wrapper for an XBee operating in AT /
+Transparent mode. Both `HeptaCom` and `HeptaLiteCom` use SoftwareSerial with
+RX pin 15 and TX pin 14.
+
+Before using the library, configure the XBee with settings appropriate for the
+kit:
+
+- `AP=0`
+- a matching PAN ID
+- `DH` / `DL` for the peer XBee
+- `BD` matching the baud rate passed to `begin()`
+
+`send()` transmits exactly the bytes supplied. It does not append a newline:
+
+```cpp
+#include <HeptaSat.h>
+
+HeptaCom com;
+
+void setup() {
+  Serial.begin(115200);
+  com.begin(9600);
+  com.send("hello\n");
+}
+```
+
+`set_transparent_mode()` and `set_api_mode()` enter XBee command mode and
+change `AP` from the microcontroller. Entering command mode requires guard
+times before and after `+++`, so a mode change takes several seconds.
+
+Both functions default to `save=false` and therefore do not send `ATWR`:
+
+```cpp
+com.set_transparent_mode();      // Temporary AP=0
+com.set_transparent_mode(true);  // AP=0 and write to nonvolatile memory
+```
+
+Specify `save=true` only when the setting must survive a power cycle. `ATWR`
+writes nonvolatile memory and should not be called frequently. The standard
+state for a reused kit is AT / Transparent mode.
+
+`set_api_mode()` only changes the XBee to `AP=1`. HeptaCom v0.1 does not
+implement API frame transmission or reception. After switching to API mode,
+calling `send("hello\n")` does not work as Transparent-mode communication.
 
 ## Quick start
 
@@ -60,6 +105,13 @@ void loop() {}
 | [docs/boards/hepta-sat-lite.md](docs/boards/hepta-sat-lite.md) | Lite board: pin map + class list |
 | [docs/modules/](docs/modules/) | Per-subsystem API: [CDH](docs/modules/cdh.md) · [COM](docs/modules/com.md) · [EPS](docs/modules/eps.md) · [Sensor](docs/modules/sensor.md) |
 | [docs/drivers/](docs/drivers/README.md) | Hardware drivers: ADC, camera, GPS, IMU, Unit Roller |
+
+## Examples
+
+| Example | Contents |
+|---------|----------|
+| [01_basic_transparent](examples/01_basic_transparent/01_basic_transparent.ino) | Send and receive text in Transparent mode |
+| [02_switch_transparent_mode](examples/02_switch_transparent_mode/02_switch_transparent_mode.ino) | Temporarily restore `AP=0` without `ATWR` |
 
 ## Repository layout
 

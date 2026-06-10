@@ -7,16 +7,19 @@ Entry header: [HeptaSat.h](../../HeptaSat.h) &mdash; `#include <HeptaSat.h>`
 | Class | Base | Source |
 |-------|------|--------|
 | `HeptaCdh`    | `HeptaCdhBase`    | [hepta_sat/hepta_cdh.h](../../hepta_sat/hepta_cdh.h) |
+| `HeptaCom`    | `HeptaComBase`    | [hepta_sat/hepta_com.h](../../hepta_sat/hepta_com.h) |
 | `HeptaEps`    | `HeptaEpsBase`    | [hepta_sat/hepta_eps.h](../../hepta_sat/hepta_eps.h) |
 | `HeptaSensor` | `HeptaSensorBase` | [hepta_sat/hepta_sensor.h](../../hepta_sat/hepta_sensor.h) |
-
-> COM is **in development**: the full board has no `HeptaCom` class yet (COM
-> currently ships on the Lite board only). A full-board `HeptaCom` is planned.
-> See [architecture.md](../architecture.md#com-status-in-development).
 
 ## Pin map
 
 Pins are fixed in each board class's constructor.
+
+### COM (XBee)
+| Signal | Pin |
+|--------|----:|
+| XBee RX | 15 |
+| XBee TX | 14 |
 
 ### CDH (SD card / SPI)
 | Signal | Pin |
@@ -49,6 +52,7 @@ Rail voltages and currents are read through an external **MCP3208** ADC
 See the per-subsystem pages:
 
 - [modules/cdh.md](../modules/cdh.md)
+- [modules/com.md](../modules/com.md)
 - [modules/eps.md](../modules/eps.md) &mdash; full-board `HeptaEps` adds 5V/3V3/SAP
   rail voltages and charge/discharge current via the MCP3208.
 - [modules/sensor.md](../modules/sensor.md) &mdash; full-board `HeptaSensor` adds
