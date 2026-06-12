@@ -17,6 +17,8 @@ constexpr uint8_t kFormatJpeg = 0x01;
 
 constexpr uint16_t kPayloadMax = 512;
 constexpr size_t kHeaderSize   = 11;
+constexpr uint32_t kImageMarkerSettleMs = 20;
+constexpr uint32_t kInterPacketDelayMs  = 10;
 
 // Minimal valid 1x1 grey JPEG for protocol testing without a camera.
 static const uint8_t kTestJpeg[] = {
@@ -110,6 +112,9 @@ bool send_image_packet(HeptaComBase& com,
     }
   }
 
+  // Transparent-mode XBee has no flow control on this board. A short gap
+  // prevents sustained UART bursts from overrunning either radio's buffer.
+  delay(kInterPacketDelayMs);
   return true;
 }
 
@@ -225,6 +230,7 @@ bool send_picture_from_buffer(HeptaComBase& com,
   uint16_t total_packet_count = data_packet_count_for_size(image_size) + 2;
 
   com.send("IMG_BEGIN\n");
+  delay(kImageMarkerSettleMs);
 
   if (!send_start_packet(com,
                          total_packet_count,
@@ -249,6 +255,7 @@ bool send_picture_from_file(HeptaComBase& com,
   uint16_t total_packet_count = data_packet_count_for_size(image_size) + 2;
 
   com.send("IMG_BEGIN\n");
+  delay(kImageMarkerSettleMs);
 
   if (!send_start_packet(com,
                          total_packet_count,
@@ -331,6 +338,7 @@ bool HeptaImageTx::send_jpeg_file(HeptaComBase& com, File& file, uint16_t image_
 
 void HeptaImageTx::send_error(HeptaComBase& com, uint8_t error_code) {
   com.send("IMG_BEGIN\n");
+  delay(kImageMarkerSettleMs);
   send_image_packet(com, kPacketTypeError, 0, 1, &error_code, 1);
   com.send("\nIMG_END\n");
 }
