@@ -16,7 +16,6 @@ class Xbee {
       : serial_(rx_pin, tx_pin), last_error_(nullptr) {}
 
     bool begin(void);
-    bool begin(uint16_t baud_rate);
 
     bool send(const char* text);
     bool send(const uint8_t* data, size_t length);

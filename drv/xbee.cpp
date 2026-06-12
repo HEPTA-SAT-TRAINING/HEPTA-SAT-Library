@@ -5,6 +5,7 @@
 
 namespace {
 
+constexpr uint32_t XBEE_BAUD_RATE = 57600;
 constexpr uint32_t XBEE_GUARD_TIME_MS = 1100;
 constexpr uint32_t XBEE_COMMAND_TIMEOUT_MS = 1000;
 constexpr int XBEE_ERROR = -1;
@@ -14,13 +15,9 @@ constexpr int XBEE_BUFFER_OVERFLOW = -2;
 
 
 bool Xbee::begin(void) {
+  serial_.begin(XBEE_BAUD_RATE);
   last_error_ = nullptr;
   return true;
-}
-
-bool Xbee::begin(uint16_t baud_rate) {
-  serial_.begin(baud_rate);
-  return begin();
 }
 
 bool Xbee::send(const char* text) {

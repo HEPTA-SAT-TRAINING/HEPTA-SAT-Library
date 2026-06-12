@@ -10,10 +10,6 @@ bool HeptaComBase::begin(void) {
   return xbee_.begin();
 }
 
-bool HeptaComBase::begin(uint16_t baud_rate) {
-  return xbee_.begin(baud_rate);
-}
-
 bool HeptaComBase::send(const char* text) {
   return xbee_.send(text);
 }

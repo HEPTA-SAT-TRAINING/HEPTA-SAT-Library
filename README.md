@@ -34,7 +34,10 @@ kit:
 - `AP=0`
 - a matching PAN ID
 - `DH` / `DL` for the peer XBee
-- `BD` matching the baud rate passed to `begin()`
+- `BD=6` (57600 baud)
+
+The library always opens the XBee UART at 57600 baud. The baud rate is not
+specified by sketches.
 
 `send()` transmits exactly the bytes supplied. It does not append a newline:
 
@@ -45,7 +48,7 @@ HeptaCom com;
 
 void setup() {
   Serial.begin(115200);
-  com.begin(9600);
+  com.begin();
   com.send("hello\n");
 }
 ```
