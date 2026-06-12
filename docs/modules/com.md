@@ -14,7 +14,7 @@ The initial implementation targets XBee AT / Transparent mode.
 
 | Method | Description |
 |--------|-------------|
-| `bool begin()` | Start the XBee SoftwareSerial port at the fixed 57600 baud rate. |
+| `bool begin()` | Start the XBee SoftwareSerial port at the fixed 38400 baud rate. |
 | `bool send(const char* text)` | Send a null-terminated string without adding a newline. |
 | `bool send(const uint8_t* data, size_t length)` | Send raw bytes. |
 | `int receive(...)` | Receive bytes, optionally waiting for a timeout. |

@@ -15,7 +15,9 @@ constexpr uint8_t kPacketTypeError = 0x04;
 
 constexpr uint8_t kFormatJpeg = 0x01;
 
-constexpr uint16_t kPayloadMax = 512;
+// Keep one protocol packet below the XBee 802.15.4 RF payload range.
+// Header (11 bytes) + payload (64 bytes) fits without a long UART burst.
+constexpr uint16_t kPayloadMax = 64;
 constexpr size_t kHeaderSize   = 11;
 constexpr uint32_t kImageMarkerSettleMs = 20;
 constexpr uint32_t kInterPacketDelayMs  = 10;

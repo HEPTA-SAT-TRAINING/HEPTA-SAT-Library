@@ -34,9 +34,9 @@ kit:
 - `AP=0`
 - a matching PAN ID
 - `DH` / `DL` for the peer XBee
-- `BD=6` (57600 baud)
+- `BD=5` (38400 baud)
 
-The library always opens the XBee UART at 57600 baud. The baud rate is not
+The library always opens the XBee UART at 38400 baud. The baud rate is not
 specified by sketches.
 
 `send()` transmits exactly the bytes supplied. It does not append a newline:
