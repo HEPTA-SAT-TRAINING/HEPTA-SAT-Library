@@ -1,5 +1,8 @@
 #include "hepta_com_base.h"
 
+#include "hepta_image_tx.h"
+
+#include <SD.h>
 #include <string.h>
 
 
@@ -168,4 +171,25 @@ String HeptaComBase::get_text(void) {
   }
 
   return received_text;
+}
+
+bool HeptaComBase::downlink_image_file(const char* filename, uint16_t image_id) {
+  if (filename == nullptr) {
+    send_image_error(IMAGE_ERROR_NOT_AVAILABLE);
+    return false;
+  }
+
+  File file = SD.open(filename, FILE_READ);
+  if (!file) {
+    send_image_error(IMAGE_ERROR_NOT_AVAILABLE);
+    return false;
+  }
+
+  bool ok = HeptaImageTx::send_jpeg_file(*this, file, image_id);
+  file.close();
+  return ok;
+}
+
+void HeptaComBase::send_image_error(uint8_t error_code) {
+  HeptaImageTx::send_error(*this, error_code);
 }

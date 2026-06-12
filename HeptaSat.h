@@ -13,6 +13,7 @@
 #ifndef HEPTA_SAT_H
 #define HEPTA_SAT_H
 
+#include "common/hepta_image_tx.h"
 #include "hepta_sat/hepta_cdh.h"
 #include "hepta_sat/hepta_com.h"
 #include "hepta_sat/hepta_eps.h"

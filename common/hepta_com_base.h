@@ -18,6 +18,11 @@
 
 class HeptaComBase {
   public:
+    static constexpr uint8_t IMAGE_ERROR_NOT_AVAILABLE   = 0x01;
+    static constexpr uint8_t IMAGE_ERROR_CAPTURE_FAILED  = 0x02;
+    static constexpr uint8_t IMAGE_ERROR_SIZE_TOO_LARGE  = 0x03;
+    static constexpr uint8_t IMAGE_ERROR_INTERNAL_BUFFER = 0x04;
+
     bool begin(void);
     bool begin(uint16_t baud_rate);
 
@@ -57,6 +62,9 @@ class HeptaComBase {
 
     String get_text(void);
     void send_text(const String text);
+
+    bool downlink_image_file(const char* filename, uint16_t image_id = 0);
+    void send_image_error(uint8_t error_code);
 
   protected:
     HeptaComBase(uint8_t rx, uint8_t tx)
