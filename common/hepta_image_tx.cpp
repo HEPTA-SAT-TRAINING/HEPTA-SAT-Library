@@ -12,6 +12,7 @@ constexpr uint8_t kPacketTypeStart = 0x01;
 constexpr uint8_t kPacketTypeData  = 0x02;
 constexpr uint8_t kPacketTypeEnd   = 0x03;
 constexpr uint8_t kPacketTypeError = 0x04;
+constexpr uint8_t kPacketTypeParity = 0x05;
 
 constexpr uint8_t kFormatJpeg = 0x01;
 
@@ -125,7 +126,7 @@ bool send_start_packet(HeptaComBase& com,
                        uint16_t image_id,
                        uint32_t image_size,
                        uint16_t image_crc) {
-  uint8_t payload[9];
+  uint8_t payload[11];
   payload[0] = kFormatJpeg;
   write_le16(payload + 1, image_id);
   payload[3] = static_cast<uint8_t>(image_size & 0xFF);
@@ -133,6 +134,7 @@ bool send_start_packet(HeptaComBase& com,
   payload[5] = static_cast<uint8_t>((image_size >> 16) & 0xFF);
   payload[6] = static_cast<uint8_t>((image_size >> 24) & 0xFF);
   write_le16(payload + 7, image_crc);
+  write_le16(payload + 9, kPayloadMax);
 
   return send_image_packet(com,
                          kPacketTypeStart,
@@ -146,11 +148,12 @@ uint16_t data_packet_count_for_size(uint32_t image_size) {
   return static_cast<uint16_t>((image_size + kPayloadMax - 1) / kPayloadMax);
 }
 
-bool send_data_packets_from_buffer(HeptaComBase& com,
-                                   const uint8_t* data,
-                                   uint32_t image_size,
-                                   uint16_t total_packet_count) {
+bool send_data_and_parity_from_buffer(HeptaComBase& com,
+                                      const uint8_t* data,
+                                      uint32_t image_size,
+                                      uint16_t total_packet_count) {
   uint16_t data_packet_count = data_packet_count_for_size(image_size);
+  uint8_t parity[kPayloadMax] = {0};
 
   for (uint16_t i = 0; i < data_packet_count; i++) {
     uint32_t offset = static_cast<uint32_t>(i) * kPayloadMax;
@@ -158,6 +161,9 @@ bool send_data_packets_from_buffer(HeptaComBase& com,
 
     if (offset + len > image_size) {
       len = static_cast<uint16_t>(image_size - offset);
+    }
+    for (uint16_t j = 0; j < len; j++) {
+      parity[j] ^= data[offset + j];
     }
 
     if (!send_image_packet(com,
@@ -170,14 +176,20 @@ bool send_data_packets_from_buffer(HeptaComBase& com,
     }
   }
 
-  return true;
+  return send_image_packet(com,
+                           kPacketTypeParity,
+                           data_packet_count + 1,
+                           total_packet_count,
+                           parity,
+                           sizeof(parity));
 }
 
-bool send_data_packets_from_file(HeptaComBase& com,
-                                 File& file,
-                                 uint32_t image_size,
-                                 uint16_t total_packet_count) {
+bool send_data_and_parity_from_file(HeptaComBase& com,
+                                    File& file,
+                                    uint32_t image_size,
+                                    uint16_t total_packet_count) {
   uint8_t buf[kPayloadMax];
+  uint8_t parity[kPayloadMax] = {0};
   uint16_t data_packet_count = data_packet_count_for_size(image_size);
 
   if (!file.seek(0)) {
@@ -196,6 +208,9 @@ bool send_data_packets_from_file(HeptaComBase& com,
     if (read_len != len) {
       return false;
     }
+    for (uint16_t j = 0; j < len; j++) {
+      parity[j] ^= buf[j];
+    }
 
     if (!send_image_packet(com,
                            kPacketTypeData,
@@ -207,7 +222,12 @@ bool send_data_packets_from_file(HeptaComBase& com,
     }
   }
 
-  return true;
+  return send_image_packet(com,
+                           kPacketTypeParity,
+                           data_packet_count + 1,
+                           total_packet_count,
+                           parity,
+                           sizeof(parity));
 }
 
 bool send_end_and_footer(HeptaComBase& com, uint16_t total_packet_count) {
@@ -229,7 +249,7 @@ bool send_picture_from_buffer(HeptaComBase& com,
                               uint32_t image_size,
                               uint16_t image_crc,
                               uint16_t image_id) {
-  uint16_t total_packet_count = data_packet_count_for_size(image_size) + 2;
+  uint16_t total_packet_count = data_packet_count_for_size(image_size) + 3;
 
   com.send("IMG_BEGIN\n");
   delay(kImageMarkerSettleMs);
@@ -242,7 +262,16 @@ bool send_picture_from_buffer(HeptaComBase& com,
     return false;
   }
 
-  if (!send_data_packets_from_buffer(com, data, image_size, total_packet_count)) {
+  // START is idempotent and repeated so one lost control packet is harmless.
+  if (!send_start_packet(com,
+                         total_packet_count,
+                         image_id,
+                         image_size,
+                         image_crc)) {
+    return false;
+  }
+
+  if (!send_data_and_parity_from_buffer(com, data, image_size, total_packet_count)) {
     return false;
   }
 
@@ -254,7 +283,7 @@ bool send_picture_from_file(HeptaComBase& com,
                             uint32_t image_size,
                             uint16_t image_crc,
                             uint16_t image_id) {
-  uint16_t total_packet_count = data_packet_count_for_size(image_size) + 2;
+  uint16_t total_packet_count = data_packet_count_for_size(image_size) + 3;
 
   com.send("IMG_BEGIN\n");
   delay(kImageMarkerSettleMs);
@@ -267,7 +296,15 @@ bool send_picture_from_file(HeptaComBase& com,
     return false;
   }
 
-  if (!send_data_packets_from_file(com, file, image_size, total_packet_count)) {
+  if (!send_start_packet(com,
+                         total_packet_count,
+                         image_id,
+                         image_size,
+                         image_crc)) {
+    return false;
+  }
+
+  if (!send_data_and_parity_from_file(com, file, image_size, total_packet_count)) {
     return false;
   }
 
