@@ -11,10 +11,10 @@ The full-board `HeptaSensor` additionally exposes **GPS** (GP-1818MK) and a
 
 | Method | Description |
 |--------|-------------|
-| `bool begin(void)` | Initialize the BNO055 IMU. |
-| `void get_acceleration(float* ax, float* ay, float* az)` | Acceleration in m/s². |
-| `void get_gyro(float* gx, float* gy, float* gz)` | Angular rate in deg/s. |
-| `void get_magnetometer(float* mx, float* my, float* mz)` | Magnetic field in µT. |
+| `bool begin(void)` | Initialize the BNO055 IMU; returns whether it responded. |
+| `bool get_acceleration(float* ax, float* ay, float* az)` | Acceleration in m/s². Reinitializes after an I2C failure. |
+| `bool get_gyro(float* gx, float* gy, float* gz)` | Angular rate in deg/s. Reinitializes after an I2C failure. |
+| `bool get_magnetometer(float* mx, float* my, float* mz)` | Magnetic field in µT. Reinitializes after an I2C failure. |
 | `void print_acceleration(void)` / `print_gyro(void)` / `print_magnetometer(void)` | Print to Serial. |
 
 Each board adds its own `get_temperature(void)` returning degrees Celsius, using
@@ -47,12 +47,13 @@ meters above mean sea level. `GpggaData` / `GprmcData` are defined in
 
 | Method | Description |
 |--------|-------------|
-| `bool camera_snapshot(const char* filename = "picture.jpg")` | Capture a JPEG to the SD card. |
+| `bool camera_snapshot(const char* filename = "picture.jpg")` | Capture a JPEG to the SD card. Camera and SD initialization are retried after failure. |
 | `void camera_invalidate(void)` | Drop cached camera setup so the next snapshot re-syncs from 14400 baud. |
 
-Call `camera_invalidate()` after a camera failure / power-cycle. The camera VCC
-is not on an MCU-controllable rail, so recovery needs an operator power-cycle;
-invalidating ensures the driver re-syncs instead of trusting stale state. See
+`camera_snapshot()` invalidates stale camera state and retries automatically.
+`camera_invalidate()` remains available for an explicit power-cycle workflow.
+The camera VCC is not on an MCU-controllable rail, so some hardware faults still
+need an operator power-cycle. See
 [drivers/camera-c1098.md](../drivers/camera-c1098.md).
 
 ## Lite board &mdash; `HeptaLiteSensor`

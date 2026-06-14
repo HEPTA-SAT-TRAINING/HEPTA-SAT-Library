@@ -1,9 +1,5 @@
 #include "hepta_sensor.h"
 
-#include <SPI.h>
-#include <SD.h>
-
-
 bool HeptaSensor::begin(void) {
   // Run the shared sensor init (ADC resolution, temp pin, BNO055) first,
   // then bring up the GPS SoftwareSerial port.
@@ -82,17 +78,19 @@ float HeptaSensor::get_temperature(void) {
 }
 
 bool HeptaSensor::camera_snapshot(const char* filename) {
-  // Single capture attempt. A camera hung by ESD/noise cannot be recovered in
-  // software because its VCC is not on an MCU/EPS-controllable rail; the operator
-  // must physically power-cycle the camera. On failure the caller invalidates the
-  // driver so the next attempt re-syncs at 14400 baud.
   // 57600 baud (vs the max 115200) trades a little speed for far better noise/ESD
   // immunity on the UART, which is the main trigger for the camera getting stuck.
-  if (!cam.begin(C1098_BAUD_RATE_57600, C1098_JPEG_SIZE_VGA)) {
-    return false;
+  uint32_t data_len = 0;
+  for (uint8_t attempt = 0; attempt < 2; attempt++) {
+    if (cam.begin(C1098_BAUD_RATE_57600, C1098_JPEG_SIZE_VGA)) {
+      data_len = cam.take_picture();
+      if (data_len > 0) {
+        break;
+      }
+    }
+    cam.invalidate();
+    delay(100);
   }
-
-  uint32_t data_len = cam.take_picture();
   if (data_len == 0) {
     Serial.println("No picture data available.");
     return false;
@@ -100,9 +98,10 @@ bool HeptaSensor::camera_snapshot(const char* filename) {
 
   // O_TRUNC truncates the file to zero length on open so each snapshot
   // starts fresh. FILE_WRITE cannot be used here because it implies O_APPEND.
-  File file = SD.open(filename, O_WRITE | O_CREAT | O_TRUNC);
+  File file = storage_.open(filename, O_WRITE | O_CREAT | O_TRUNC);
   if (!file) {
     Serial.println("Failed to open file for writing.");
+    cam.invalidate();
     return false;
   }
 
@@ -123,8 +122,13 @@ bool HeptaSensor::camera_snapshot(const char* filename) {
     if (total_written == 0 && read_size >= 2) {
       have_soi = (buf[0] == 0xFF && buf[1] == 0xD8);
     }
-    file.write(buf, read_size);
-    total_written += read_size;
+    size_t write_size = file.write(buf, read_size);
+    total_written += write_size;
+    if (write_size != static_cast<size_t>(read_size)) {
+      read_error = true;
+      storage_.invalidate();
+      break;
+    }
     // Keep the last TAIL_N bytes of the whole stream for the EOI search.
     for (int i = 0; i < read_size; i++) {
       if (tail_len < TAIL_N) {
@@ -147,6 +151,7 @@ bool HeptaSensor::camera_snapshot(const char* filename) {
   bool jpeg_ok = have_soi && have_eoi;
 
   if (read_error || total_written != data_len || !jpeg_ok) {
+    cam.invalidate();
     Serial.print("Capture invalid: expected ");
     Serial.print(data_len);
     Serial.print(" bytes, wrote ");

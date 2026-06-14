@@ -30,9 +30,10 @@ fixed 512-byte packets. Wrapped by the full-board [Sensor](../modules/sensor.md)
 - The driver hunts for the `0xAA` start byte when reading command frames, so a
   stray/noise byte cannot permanently desync the 6-byte framing.
 - Packets are checksummed with retry; the JPEG is validated before it is accepted.
-- After a camera power-cycle, call `invalidate()` (or `HeptaSensor::camera_invalidate()`)
-  so the driver re-syncs instead of assuming the camera is still initialized. The
-  camera VCC is not on an MCU-controllable rail, so recovery is operator-driven.
+- `HeptaSensor::camera_snapshot()` automatically invalidates stale state and
+  retries initialization once. Direct driver users should call `invalidate()`
+  after a camera power-cycle. The camera VCC is not on an MCU-controllable rail,
+  so some hardware faults still require an operator power-cycle.
 
 ## Reading a full image
 

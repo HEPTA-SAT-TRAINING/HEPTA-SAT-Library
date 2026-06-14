@@ -12,72 +12,39 @@
 
 #include <Wire.h>
 
-void Bno055::begin(void) {
+bool Bno055::begin(void) {
   while(millis() < 750) {
     // Wait for 750ms to ensure the sensor is ready
   }
 
   Wire.begin();
-  _write_reg(BNO055_OPR_MODE, BNO055_OPR_MODE_NDOF);
+  _initialized = false;
+
+  uint8_t chip_id = 0;
+  if (!_read_reg(BNO055_CHIP_ID, &chip_id) ||
+      chip_id != BNO055_CHIP_ID_VALUE) {
+    return false;
+  }
+
+  if (!_write_reg(BNO055_OPR_MODE, BNO055_OPR_MODE_NDOF)) {
+    return false;
+  }
 
   delay(10);
+  _initialized = true;
+  return true;
 }
 
-void Bno055::sen_acc(float *ax, float *ay, float *az) {
-  uint8_t data[6] = {0};
-
-  for(uint8_t i = 0; i < 6; i++) {
-    Wire.beginTransmission(I2C_ADDR_BNO055);
-    Wire.write(BNO055_ACC_DATA_X_LSB + i);
-    Wire.endTransmission();
-
-    Wire.requestFrom(I2C_ADDR_BNO055, 1);
-    if (Wire.available() == 1) {
-      data[i] = Wire.read();
-    }
-  }
-
-  *ax = (int16_t)(data[1] << 8 | data[0]) * 0.01; // m/s^2
-  *ay = (int16_t)(data[3] << 8 | data[2]) * 0.01; // m/s^2
-  *az = (int16_t)(data[5] << 8 | data[4]) * 0.01; // m/s^2
+bool Bno055::sen_acc(float *ax, float *ay, float *az) {
+  return _read_vector(BNO055_ACC_DATA_X_LSB, 0.01f, ax, ay, az);
 }
 
-void Bno055::sen_gyro(float *gx, float *gy, float *gz) {
-  uint8_t data[6] = {0};
-
-  for(uint8_t i = 0; i < 6; i++) {
-    Wire.beginTransmission(I2C_ADDR_BNO055);
-    Wire.write(BNO055_GYR_DATA_X_LSB + i);
-    Wire.endTransmission();
-
-    Wire.requestFrom(I2C_ADDR_BNO055, 1);
-    if (Wire.available() == 1) {
-      data[i] = Wire.read();
-    }
-  }
-
-  *gx = (int16_t)(data[1] << 8 | data[0]) / 16.0; // deg/s
-  *gy = (int16_t)(data[3] << 8 | data[2]) / 16.0; // deg/s
-  *gz = (int16_t)(data[5] << 8 | data[4]) / 16.0; // deg/s
+bool Bno055::sen_gyro(float *gx, float *gy, float *gz) {
+  return _read_vector(BNO055_GYR_DATA_X_LSB, 1.0f / 16.0f, gx, gy, gz);
 }
 
-void Bno055::sen_mag(float *mx,float *my,float *mz) {
-  uint8_t data[6] = {0};
-
-  for(uint8_t i = 0; i < 6; i++) {
-    Wire.beginTransmission(I2C_ADDR_BNO055);
-    Wire.write(BNO055_MAG_DATA_X_LSB + i);
-    Wire.endTransmission();
-
-    Wire.requestFrom(I2C_ADDR_BNO055, 1);
-    if (Wire.available() == 1) {
-      data[i] = Wire.read();
-    }
-  }
-
-  *mx = (int16_t)(data[1] << 8 | data[0]) / 16.0; // uT
-  *my = (int16_t)(data[3] << 8 | data[2]) / 16.0; // uT
-  *mz = (int16_t)(data[5] << 8 | data[4]) / 16.0; // uT
+bool Bno055::sen_mag(float *mx,float *my,float *mz) {
+  return _read_vector(BNO055_MAG_DATA_X_LSB, 1.0f / 16.0f, mx, my, mz);
 }
 
 void Bno055::print_acc(void) {
@@ -133,22 +100,64 @@ void Bno055::print_mag(void) {
   Private functions
 ------------------ */
 
-void Bno055::_write_reg(uint8_t reg, uint8_t value) {
+bool Bno055::_write_reg(uint8_t reg, uint8_t value) {
   Wire.beginTransmission(I2C_ADDR_BNO055);
   Wire.write(reg);
   Wire.write(value);
-  Wire.endTransmission();
+  return Wire.endTransmission() == 0;
 }
 
-uint8_t Bno055::_read_reg(uint8_t reg) {
-  Wire.beginTransmission(I2C_ADDR_BNO055);
-  Wire.write(reg);
-  Wire.endTransmission();
+bool Bno055::_read_reg(uint8_t reg, uint8_t* value) {
+  return value != nullptr && _read_bytes(reg, value, 1);
+}
 
-  Wire.requestFrom(I2C_ADDR_BNO055, 1);
-  if (Wire.available() == 1) {
-    return Wire.read();
+bool Bno055::_read_vector(uint8_t start_reg, float scale,
+                          float* x, float* y, float* z) {
+  if (x == nullptr || y == nullptr || z == nullptr) {
+    return false;
   }
 
-  return 0; // Return 0 if read failed
+  uint8_t data[6] = {0};
+  if ((!_initialized && !begin()) || !_read_bytes(start_reg, data, sizeof(data))) {
+    _initialized = false;
+    if (!begin() || !_read_bytes(start_reg, data, sizeof(data))) {
+      *x = 0.0f;
+      *y = 0.0f;
+      *z = 0.0f;
+      return false;
+    }
+  }
+
+  *x = static_cast<int16_t>((static_cast<uint16_t>(data[1]) << 8) | data[0]) * scale;
+  *y = static_cast<int16_t>((static_cast<uint16_t>(data[3]) << 8) | data[2]) * scale;
+  *z = static_cast<int16_t>((static_cast<uint16_t>(data[5]) << 8) | data[4]) * scale;
+  return true;
+}
+
+bool Bno055::_read_bytes(uint8_t start_reg, uint8_t* data, size_t length) {
+  if (data == nullptr || length == 0) {
+    return false;
+  }
+
+  Wire.beginTransmission(I2C_ADDR_BNO055);
+  Wire.write(start_reg);
+  if (Wire.endTransmission(false) != 0) {
+    return false;
+  }
+
+  size_t received = Wire.requestFrom(I2C_ADDR_BNO055, length);
+  if (received != length) {
+    while (Wire.available()) {
+      Wire.read();
+    }
+    return false;
+  }
+
+  for (size_t i = 0; i < length; i++) {
+    if (!Wire.available()) {
+      return false;
+    }
+    data[i] = Wire.read();
+  }
+  return true;
 }

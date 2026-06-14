@@ -14,8 +14,7 @@
 bool HeptaSensorBase::begin(void) {
   analogReadResolution(12);
   pinMode(_temp_pin, INPUT);
-  bno055.begin();
-  return true;
+  return bno055.begin();
 }
 
 float HeptaSensorBase::read_temp_voltage(void) {
@@ -23,16 +22,16 @@ float HeptaSensorBase::read_temp_voltage(void) {
   return (adc_value / 4095.0f) * 3.3f;
 }
 
-void HeptaSensorBase::get_acceleration(float *ax, float *ay, float *az) {
-  bno055.sen_acc(ax, ay, az);
+bool HeptaSensorBase::get_acceleration(float *ax, float *ay, float *az) {
+  return bno055.sen_acc(ax, ay, az);
 }
 
-void HeptaSensorBase::get_gyro(float *gx, float *gy, float *gz) {
-  bno055.sen_gyro(gx, gy, gz);
+bool HeptaSensorBase::get_gyro(float *gx, float *gy, float *gz) {
+  return bno055.sen_gyro(gx, gy, gz);
 }
 
-void HeptaSensorBase::get_magnetometer(float *mx, float *my, float *mz) {
-  bno055.sen_mag(mx, my, mz);
+bool HeptaSensorBase::get_magnetometer(float *mx, float *my, float *mz) {
+  return bno055.sen_mag(mx, my, mz);
 }
 
 void HeptaSensorBase::print_acceleration(void) {

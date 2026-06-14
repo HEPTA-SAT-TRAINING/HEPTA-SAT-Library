@@ -19,9 +19,9 @@
 class HeptaSensorBase {
   public:
     bool begin(void);
-    void get_acceleration(float *ax, float *ay, float *az);
-    void get_gyro(float *gx, float *gy, float *gz);
-    void get_magnetometer(float *mx, float *my, float *mz);
+    bool get_acceleration(float *ax, float *ay, float *az);
+    bool get_gyro(float *gx, float *gy, float *gz);
+    bool get_magnetometer(float *mx, float *my, float *mz);
     void print_acceleration(void);
     void print_gyro(void);
     void print_magnetometer(void);

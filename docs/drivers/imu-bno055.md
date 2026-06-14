@@ -11,10 +11,10 @@ boards.
 
 | Method | Description |
 |--------|-------------|
-| `void begin(void)` | Start I2C and put the BNO055 in NDOF mode. |
-| `void sen_acc(float* ax, float* ay, float* az)` | Acceleration in m/s² (±4 G range). |
-| `void sen_gyro(float* gx, float* gy, float* gz)` | Angular rate in deg/s (±125 deg/s). |
-| `void sen_mag(float* mx, float* my, float* mz)` | Magnetic field in µT. |
+| `bool begin(void)` | Start I2C, verify the chip ID, and put the BNO055 in NDOF mode. |
+| `bool sen_acc(float* ax, float* ay, float* az)` | Acceleration in m/s²; reinitialize and retry after an I2C failure. |
+| `bool sen_gyro(float* gx, float* gy, float* gz)` | Angular rate in deg/s; reinitialize and retry after an I2C failure. |
+| `bool sen_mag(float* mx, float* my, float* mz)` | Magnetic field in µT; reinitialize and retry after an I2C failure. |
 | `void print_acc(void)` / `print_gyro(void)` / `print_mag(void)` | Print to Serial. |
 
 > In normal use, access the IMU through `HeptaSensor` / `HeptaLiteSensor` rather

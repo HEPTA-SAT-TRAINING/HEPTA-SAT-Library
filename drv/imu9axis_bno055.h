@@ -19,36 +19,41 @@ class Bno055 {
     /**
      * @brief Begin transmission with BNO055
      */
-    void begin(void);
+    bool begin(void);
 
     /**
      * @brief Get acceleration data from BNO055
      * @note unit is m/s^2, range is +-4G
      */
-    void sen_acc(float *ax, float *ay, float *az);
+    bool sen_acc(float *ax, float *ay, float *az);
 
     /**
      * @brief Get gyro data from BNO055
      * @note unit is deg/s, range is +-125deg/s
      */
-    void sen_gyro(float *gx, float *gy, float *gz);
+    bool sen_gyro(float *gx, float *gy, float *gz);
 
     /**
      * @brief Get magnetometer data from BNO055
      * @note unit is uT
      */
-    void sen_mag(float *mx, float *my, float *mz);
+    bool sen_mag(float *mx, float *my, float *mz);
 
     void print_acc(void);
     void print_gyro(void);
     void print_mag(void);
 
   private:
-    void _write_reg(uint8_t reg, uint8_t value);
-    uint8_t _read_reg(uint8_t reg);
+    bool _write_reg(uint8_t reg, uint8_t value);
+    bool _read_reg(uint8_t reg, uint8_t* value);
+    bool _read_vector(uint8_t start_reg, float scale,
+                      float* x, float* y, float* z);
+    bool _read_bytes(uint8_t start_reg, uint8_t* data, size_t length);
 
     const uint8_t I2C_ADDR_BNO055 = 0x28;
+    const uint8_t BNO055_CHIP_ID_VALUE = 0xA0;
     const uint8_t BNO055_OPR_MODE_NDOF = 0x0C; // NDOF mode for 9-axis fusion
+    bool _initialized = false;
 
     typedef enum {
       BNO055_CHIP_ID = 0x00,
