@@ -11,7 +11,9 @@
 
 class HeptaLiteCom : public HeptaComBase {
   public:
-    HeptaLiteCom() : HeptaComBase(/*rx=*/15, /*tx=*/14) {}
+    HeptaLiteCom()
+      : HeptaComBase(/*rx=*/15, /*tx=*/14,
+                     /*sd_cs=*/3, /*sd_tx=*/19, /*sd_rx=*/16, /*sd_sck=*/18) {}
 };
 
 

@@ -16,6 +16,9 @@ The board classes only fix the SD pins; all methods below live on the base.
 | `bool sd_begin(void)` | (Re)initialize the SD card; returns success. |
 | `bool sd_is_available(void) const` | True if the SD card initialized OK. |
 
+File operations retry SD initialization automatically, so a card that was
+unavailable at boot can be inserted and used later without resetting the board.
+
 ## Serial / logging output
 
 These print to the USB `Serial` console.

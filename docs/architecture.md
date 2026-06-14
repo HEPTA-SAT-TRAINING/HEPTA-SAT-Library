@@ -18,6 +18,7 @@ board-specific pin assignments and conversion formulas separate.
                                        ▼
   base layer                       common/
   (shared logic)   HeptaCdhBase · HeptaComBase · HeptaEpsBase · HeptaSensorBase
+                                      HeptaStorage
                                        │
                                        ▼
   driver layer                       drv/
@@ -44,6 +45,10 @@ Where the real work lives. `HeptaCdhBase`, `HeptaComBase`, `HeptaEpsBase`, and
 gains) supplied by the board class. Sketches never include these headers
 directly &mdash; the protected constructors enforce that they are only reachable
 through a board subclass.
+
+`HeptaStorage` centralizes recoverable SD access for CDH file operations, camera
+capture, and image downlink. Each owner supplies the board's SPI pins, while the
+initialization and retry policy remains shared.
 
 ### Driver layer (`drv/`)
 Self-contained drivers for individual chips/modules. They know nothing about

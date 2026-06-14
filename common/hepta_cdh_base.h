@@ -15,6 +15,8 @@
 #include <SPI.h>
 #include <stdarg.h>
 
+#include "hepta_storage.h"
+
 typedef uint8_t cmd_t;
 typedef uint64_t cmd_arg_t; // not yet used, but reserved for future use
 
@@ -52,14 +54,10 @@ class HeptaCdhBase {
 
   protected:
     HeptaCdhBase(uint8_t sd_cs, uint8_t sd_tx, uint8_t sd_rx, uint8_t sd_sck)
-      : _sd_cs_pin(sd_cs), _sd_tx_pin(sd_tx), _sd_rx_pin(sd_rx), _sd_sck_pin(sd_sck) {}
+      : _storage(sd_cs, sd_tx, sd_rx, sd_sck) {}
 
   private:
-    const uint8_t _sd_cs_pin;
-    const uint8_t _sd_tx_pin;
-    const uint8_t _sd_rx_pin;
-    const uint8_t _sd_sck_pin;
-    bool _sd_initialized = false;
+    HeptaStorage _storage;
 };
 
 

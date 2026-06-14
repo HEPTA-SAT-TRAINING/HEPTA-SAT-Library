@@ -14,6 +14,7 @@
 #include <stdarg.h>
 
 #include "../drv/xbee.h"
+#include "hepta_storage.h"
 
 
 class HeptaComBase {
@@ -66,11 +67,13 @@ class HeptaComBase {
     void send_image_error(uint8_t error_code);
 
   protected:
-    HeptaComBase(uint8_t rx, uint8_t tx)
-      : xbee_(rx, tx) {}
+    HeptaComBase(uint8_t rx, uint8_t tx,
+                 uint8_t sd_cs, uint8_t sd_tx, uint8_t sd_rx, uint8_t sd_sck)
+      : xbee_(rx, tx), storage_(sd_cs, sd_tx, sd_rx, sd_sck) {}
 
   private:
     Xbee xbee_;
+    HeptaStorage storage_;
 };
 
 

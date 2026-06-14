@@ -2,7 +2,6 @@
 
 #include "hepta_image_tx.h"
 
-#include <SD.h>
 #include <string.h>
 
 
@@ -175,7 +174,7 @@ bool HeptaComBase::downlink_image_file(const char* filename, uint16_t image_id) 
     return false;
   }
 
-  File file = SD.open(filename, FILE_READ);
+  File file = storage_.open(filename, FILE_READ);
   if (!file) {
     send_image_error(IMAGE_ERROR_NOT_AVAILABLE);
     return false;
