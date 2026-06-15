@@ -35,6 +35,11 @@ class HeptaComBase {
     size_t println(const char* text);
     size_t printf(const char* format, ...) __attribute__((format(printf, 2, 3)));
     size_t vprintf(const char* format, va_list args);
+    size_t write(uint8_t data);
+    size_t write(const uint8_t* buffer, size_t size);
+
+    bool is_cmd_received(void);
+    char get_command(void);
 
     int receive(char* buffer, size_t buffer_size, uint32_t timeout_ms = 0);
     int receive(uint8_t* buffer, size_t buffer_size, uint32_t timeout_ms = 0);

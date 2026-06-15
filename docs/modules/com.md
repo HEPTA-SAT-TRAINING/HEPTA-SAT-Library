@@ -15,6 +15,10 @@ The initial implementation targets XBee AT / Transparent mode.
 | Method | Description |
 |--------|-------------|
 | `bool begin()` | Start the XBee SoftwareSerial port at the fixed 38400 baud rate. |
+| `size_t print(...)` / `println(...)` / `printf(...)` | Formatted downlink output (same signatures as CDH). |
+| `size_t write(uint8_t)` / `write(const uint8_t*, size_t)` | Raw byte output (same signatures as CDH). |
+| `bool is_cmd_received()` | Return whether a command byte is waiting on the XBee link. |
+| `char get_command()` | Read one command byte, ignoring line endings. |
 | `bool send(const char* text)` | Send a null-terminated string without adding a newline. |
 | `bool send(const uint8_t* data, size_t length)` | Send raw bytes. |
 | `int receive(...)` | Receive bytes, optionally waiting for a timeout. |
@@ -29,6 +33,10 @@ The initial implementation targets XBee AT / Transparent mode.
 
 The legacy `get_char()`, `send_char()`, `get_text()`, and `send_text()` methods
 remain available for existing sketches.
+
+`print`, `println`, `printf`, `write`, `is_cmd_received`, and `get_command` mirror
+the CDH API so sketches can switch from `cdh.*` to `com.*` for wireless telemetry
+and command handling while keeping `cdh` for SD card access.
 
 ## Example
 

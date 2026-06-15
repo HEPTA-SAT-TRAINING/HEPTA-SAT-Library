@@ -87,6 +87,38 @@ size_t HeptaComBase::vprintf(const char* format, va_list args) {
   return written;
 }
 
+size_t HeptaComBase::write(uint8_t data) {
+  return xbee_.write_byte(data);
+}
+
+size_t HeptaComBase::write(const uint8_t* buffer, size_t size) {
+  if (buffer == nullptr) {
+    return 0;
+  }
+
+  return send(buffer, size) ? size : 0;
+}
+
+bool HeptaComBase::is_cmd_received(void) {
+  return xbee_.available();
+}
+
+char HeptaComBase::get_command(void) {
+  while (is_cmd_received()) {
+    int value = xbee_.read_byte();
+    if (value < 0) {
+      break;
+    }
+
+    char received_char = static_cast<char>(value);
+    if (received_char != '\r' && received_char != '\n') {
+      return received_char;
+    }
+  }
+
+  return '\0';
+}
+
 int HeptaComBase::receive(char* buffer,
                           size_t buffer_size,
                           uint32_t timeout_ms) {
