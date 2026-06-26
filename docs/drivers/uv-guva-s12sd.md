@@ -13,7 +13,7 @@ payload channel.
 |------|-------|
 | Sensor | GUVA-S12SD |
 | Module | Seeed Grove UV Sensor |
-| Interface | Analog via MCP3208 channel 7 (CS = GP17 on HEPTA-SAT) |
+| Interface | Analog via MCP3208 channel 6 (CS = GP17 on HEPTA-SAT) |
 | Supply | 3.3 V payload rail |
 
 Voltage is averaged over **16** raw samples before conversion.
@@ -22,8 +22,8 @@ Voltage is averaged over **16** raw samples before conversion.
 
 | Method | Description |
 |--------|-------------|
-| `bool begin(AdcMcp3208* adc, uint8_t channel = 7)` | Use an existing MCP3208 instance. |
-| `bool begin(uint8_t cs_pin, uint8_t channel = 7, float ref_vol = 3.3)` | Create a local MCP3208 on `cs_pin`. |
+| `bool begin(AdcMcp3208* adc, uint8_t channel = 6)` | Use an existing MCP3208 instance. |
+| `bool begin(uint8_t cs_pin, uint8_t channel = 6, float ref_vol = 3.3)` | Create a local MCP3208 on `cs_pin`. |
 | `uint16_t get_raw()` | Single 12-bit ADC reading. |
 | `float get_voltage()` | 16-sample averaged voltage [V]. |
 | `float get_illumination_mw_m2()` | `307.0 * voltage` [mW/m²]. |
@@ -37,7 +37,7 @@ Voltage is averaged over **16** raw samples before conversion.
 UvGuvaS12sd uv;
 
 void setup() {
-  uv.begin(/*cs_pin=*/17, /*channel=*/7);
+  uv.begin(/*cs_pin=*/17, /*channel=*/6);
 }
 
 void loop() {

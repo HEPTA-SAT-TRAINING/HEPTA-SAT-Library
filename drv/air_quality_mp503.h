@@ -27,15 +27,15 @@ class AirQualityMp503 {
     /**
      * @brief Initialize with an existing MCP3208 driver instance.
      * @param adc Pointer to a configured AdcMcp3208 (e.g. shared with EPS)
-     * @param channel MCP3208 channel (default 7 = user payload)
+     * @param channel MCP3208 channel (default 6 = user payload)
      * @param skip_warmup Skip the built-in 20 s warm-up delay when already done externally
      */
-    bool begin(AdcMcp3208 *adc, uint8_t channel = 7, bool skip_warmup = false);
+    bool begin(AdcMcp3208 *adc, uint8_t channel = 6, bool skip_warmup = false);
 
     /**
      * @brief Initialize a local MCP3208 on the given chip-select pin.
      */
-    bool begin(uint8_t cs_pin, uint8_t channel = 7, float ref_vol = 3.3f,
+    bool begin(uint8_t cs_pin, uint8_t channel = 6, float ref_vol = 3.3f,
                bool skip_warmup = false);
 
     /**
@@ -63,7 +63,7 @@ class AirQualityMp503 {
 
     AdcMcp3208 *_adc = NULL;
     AdcMcp3208 _owned_adc;
-    uint8_t _channel = 7;
+    uint8_t _channel = 6;
     uint8_t _direct_adc_pin = 28;
     bool _use_direct_adc = false;
     bool _initialized = false;

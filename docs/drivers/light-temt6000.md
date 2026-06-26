@@ -11,15 +11,15 @@ output is read through the board **MCP3208** on the user payload channel.
 | Item | Value |
 |------|-------|
 | Sensor | TEMT6000 (visible-light phototransistor) |
-| Interface | Analog via MCP3208 channel 7 (CS = GP17 on HEPTA-SAT) |
+| Interface | Analog via MCP3208 channel 6 (CS = GP17 on HEPTA-SAT) |
 | Supply | 3.3 V payload rail |
 
 ## API
 
 | Method | Description |
 |--------|-------------|
-| `bool begin(AdcMcp3208* adc, uint8_t channel = 7)` | Use an existing MCP3208 instance. |
-| `bool begin(uint8_t cs_pin, uint8_t channel = 7, float ref_vol = 3.3)` | Create a local MCP3208 on `cs_pin`. |
+| `bool begin(AdcMcp3208* adc, uint8_t channel = 6)` | Use an existing MCP3208 instance. |
+| `bool begin(uint8_t cs_pin, uint8_t channel = 6, float ref_vol = 3.3)` | Create a local MCP3208 on `cs_pin`. |
 | `uint16_t get_raw()` | 12-bit ADC reading. |
 | `float get_voltage()` | Averaged channel voltage [V]. |
 | `float get_lux()` | Approximate lux (`voltage * 200`; not factory-calibrated). |
@@ -32,7 +32,7 @@ output is read through the board **MCP3208** on the user payload channel.
 LightTemt6000 light;
 
 void setup() {
-  light.begin(/*cs_pin=*/17, /*channel=*/7);
+  light.begin(/*cs_pin=*/17, /*channel=*/6);
 }
 
 void loop() {
