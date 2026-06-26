@@ -20,6 +20,12 @@ class LightTemt6000 {
     bool begin(AdcMcp3208 *adc, uint8_t channel = 7);
     bool begin(uint8_t cs_pin, uint8_t channel = 7, float ref_vol = 3.3f);
 
+    /**
+     * @brief Initialize using MCP3208 or the MCU ADC pin (GP26–GP29).
+     */
+    bool begin(bool use_mcp3208, uint8_t direct_adc_pin, uint8_t channel, uint8_t cs_pin,
+               float ref_vol = 3.3f);
+
     uint16_t get_raw(void);
     float get_voltage(void);
 
@@ -33,6 +39,9 @@ class LightTemt6000 {
     AdcMcp3208 *_adc = NULL;
     AdcMcp3208 _owned_adc;
     uint8_t _channel = 7;
+    uint8_t _direct_adc_pin = 28;
+    float _ref_voltage = 3.3f;
+    bool _use_direct_adc = false;
     bool _initialized = false;
 };
 

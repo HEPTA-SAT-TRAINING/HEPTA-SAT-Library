@@ -192,19 +192,19 @@ uint32_t Bme280::_compensate_pressure(int32_t adc_P) {
 }
 
 uint32_t Bme280::_compensate_humidity(int32_t adc_H) {
-  int32_t v_x1_u32r = _t_fine - static_cast<int32_t>(76800);
-  v_x1_u32r = (((((adc_H << 14) - (static_cast<int32_t>(_dig_H4) << 20) -
-                  (static_cast<int32_t>(_dig_H5) * v_x1_u32r)) +
-                 static_cast<int32_t>(16384)) >>
-                15) *
-               (((((((v_x1_u32r * static_cast<int32_t>(_dig_H6)) >> 10) *
-                    (((v_x1_u32r * static_cast<int32_t>(_dig_H3)) >> 11) +
-                     static_cast<int32_t>(32768))) >>
-                   10) +
-                  static_cast<int32_t>(2097152)) *
-                     static_cast<int32_t>(_dig_H2) +
-                 static_cast<int32_t>(16384)) >>
-                15);
+  int32_t var1 = _t_fine - static_cast<int32_t>(76800);
+  int32_t v_x1_u32r = (((((adc_H << 14) - (static_cast<int32_t>(_dig_H4) << 20) -
+                          (static_cast<int32_t>(_dig_H5) * var1)) +
+                         static_cast<int32_t>(16384)) >>
+                        15) *
+                       (((((((var1 * static_cast<int32_t>(_dig_H6)) >> 10) *
+                            (((var1 * static_cast<int32_t>(_dig_H3)) >> 11) +
+                             static_cast<int32_t>(32768))) >>
+                           10) +
+                          static_cast<int32_t>(2097152)) *
+                             static_cast<int32_t>(_dig_H2) +
+                         static_cast<int32_t>(16384)) >>
+                        15));
 
   v_x1_u32r = v_x1_u32r - (((((v_x1_u32r >> 15) * (v_x1_u32r >> 15)) >> 7) *
                             static_cast<int32_t>(_dig_H1)) >>
