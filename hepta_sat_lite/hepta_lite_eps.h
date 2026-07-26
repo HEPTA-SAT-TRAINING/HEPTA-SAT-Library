@@ -11,7 +11,7 @@
 
 class HeptaLiteEps : public HeptaEpsBase {
   public:
-    HeptaLiteEps() : HeptaEpsBase(/*bat_vol_pin=*/26) {}
+    HeptaLiteEps() : HeptaEpsBase(/*bus_vol_pin=*/26) {}
 
     float get_current_discharge(void);
     float get_current_charge(void);

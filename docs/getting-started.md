@@ -52,8 +52,8 @@ void loop() {
   sensor.get_acceleration(&ax, &ay, &az);
   cdh.printf("acc = %.2f, %.2f, %.2f\n", ax, ay, az);
 
-  float vbat = eps.get_battery_voltage();
-  cdh.printf("Vbat = %.2f V\n", vbat);
+  float bus = eps.get_bus_voltage();
+  cdh.printf("Bus = %.2f V\n", bus);
 
   delay(1000);
 }
