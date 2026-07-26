@@ -13,7 +13,13 @@
 
 class HeptaEps : public HeptaEpsBase {
   public:
-    HeptaEps() : HeptaEpsBase(/*bus_vol_pin=*/26) {}
+    // V4.1.1: main bus divider 1.3k (top) / 1.5k (to GND) -> gain ~1.867;
+    // MAX4372T current-sense amp (the part actually mounted; schematic
+    // symbol says MAX4372F) -> gain 20.
+    HeptaEps()
+      : HeptaEpsBase(/*bus_vol_pin=*/26,
+                     /*bus_vol_divider_gain=*/(1300.0f + 1500.0f) / 1500.0f,
+                     /*galvano_gain=*/20.0f) {}
 
     void init(void);
 

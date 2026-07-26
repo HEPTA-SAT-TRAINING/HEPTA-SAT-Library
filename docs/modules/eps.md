@@ -21,8 +21,13 @@ The two boards differ in how they measure rail voltages and currents:
 | `float get_bus_voltage(void)` | Main bus voltage in volts. |
 | `uint16_t get_bus_voltage_raw(void)` | Raw ADC reading. |
 
-The bus voltage uses a 1.3k/1.5k divider (gain ~1.867) against a 3.3 V,
-12-bit reference. Current sensing uses a MAX4372T (gain 20) over a 0.02 Ω shunt.
+Both boards measure against a 3.3 V, 12-bit reference, but each board class
+supplies its own divider and current-sense gains to `HeptaEpsBase`:
+
+- **Full board (V4.1.1)** &mdash; 1.3k/1.5k bus divider (gain ~1.867);
+  current sensing uses a MAX4372T (gain 20) over a 0.02 Ω shunt.
+- **Lite board** &mdash; 12k/30k battery divider (gain 1.4); current sensing
+  uses a gain-50 amp over a 0.02 Ω shunt (hardware unchanged by V4.1.1).
 
 ## Full board &mdash; `HeptaEps`
 

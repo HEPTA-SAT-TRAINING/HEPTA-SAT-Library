@@ -1,11 +1,12 @@
 /**
  * @file hepta_eps_base.h
- * @brief Shared EPS implementation (bus voltage + current-sense constants).
+ * @brief Shared EPS implementation (bus voltage readout + ADC reference).
  *
- * Board-specific classes (HeptaEps, HeptaLiteEps) inherit from this base,
- * supply the divider ADC pin via the protected constructor, and add
- * their own rail / current readings (MCP3208 on HEPTA-SAT, raw ADC on Lite).
- * Sketches do not include this header directly.
+ * Board-specific classes (HeptaEps, HeptaLiteEps) inherit from this base and
+ * supply the divider ADC pin plus their own divider / current-sense gains via
+ * the protected constructor (the two boards mount different hardware), then
+ * add their own rail / current readings (MCP3208 on HEPTA-SAT, raw ADC on
+ * Lite). Sketches do not include this header directly.
  */
 
 #ifndef HEPTA_EPS_BASE_H
@@ -21,20 +22,22 @@ class HeptaEpsBase {
     uint16_t get_bus_voltage_raw(void);
 
   protected:
-    HeptaEpsBase(uint8_t bus_vol_pin) : _bus_vol_pin(bus_vol_pin) {}
+    HeptaEpsBase(uint8_t bus_vol_pin, float bus_vol_divider_gain,
+                 float galvano_gain)
+      : _bus_vol_pin(bus_vol_pin),
+        _bus_vol_divider_gain(bus_vol_divider_gain),
+        galvano_gain(galvano_gain) {}
 
     const uint8_t _bus_vol_pin;
 
     const float _adc_ref_voltage = 3.3;
     const uint16_t _adc_max_value = 4096;
 
-    // Main bus divider (V4.1.1): 1.3k (top) / 1.5k (to GND)
-    // Vbus = Vadc * (R_top + R_bottom) / R_bottom ≈ Vadc * 1.867
-    const float _bus_vol_divider_gain = (1300.0f + 1500.0f) / 1500.0f;
+    // Board-specific: Vbus = Vadc * (R_top + R_bottom) / R_bottom.
+    const float _bus_vol_divider_gain;
 
-    // MAX4372T current-sense amp (the part actually mounted; schematic
-    // symbol says MAX4372F) over a 0.02 ohm shunt.
-    const float galvano_gain = 20;
+    // Board-specific current-sense amp gain over the shared 0.02 ohm shunt.
+    const float galvano_gain;
     const float galvano_resistance = 0.02;
 };
 
