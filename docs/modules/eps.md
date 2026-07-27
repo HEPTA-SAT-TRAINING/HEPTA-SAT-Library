@@ -37,7 +37,7 @@ voltage, CH3 = solar current, CH4 = charge current, CH5&ndash;CH7 = user payload
 | Method | Description |
 |--------|-------------|
 | `void init(void)` | Initialize EPS + MCP3208 ADC. |
-| `void switch_3V3_on(void)` / `switch_3V3_off(void)` | Toggle the 3V3 rail (pin 20). |
+| `void switch_3V3_on(void)` / `switch_3V3_off(void)` | Toggle the 3V3 rail (pin 20; active-high: HIGH = ON). |
 | `float get_5v_voltage(void)` | 5V rail voltage (MCP3208 CH0). |
 | `float get_3v3_voltage(void)` | 3V3 rail voltage (MCP3208 CH1). |
 | `float get_sap_voltage(void)` | Solar-array panel voltage (MCP3208 CH2, divider-corrected). |

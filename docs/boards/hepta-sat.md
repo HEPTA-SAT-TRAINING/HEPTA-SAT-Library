@@ -36,7 +36,7 @@ Pins are fixed in each board class's constructor.
 |--------|----:|
 | Bus voltage ADC | 26 |
 | Bus current ADC | 28 |
-| 3V3 switch | 20 |
+| 3V3 switch (active high) | 20 |
 | MCP3208 ADC CS | 17 |
 
 Rail voltages and the solar/charge currents are read through an external

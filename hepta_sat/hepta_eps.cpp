@@ -16,15 +16,16 @@ void HeptaEps::init(void) {
   adc.begin(_adc_cs_pin);
   pinMode(_current_bus_pin, INPUT);
   pinMode(_sw_3v3_pin, OUTPUT);
-  digitalWrite(_sw_3v3_pin, LOW);
+  // Active-high enable: HIGH = 3V3 rail ON.
+  digitalWrite(_sw_3v3_pin, HIGH);
 }
 
 void HeptaEps::switch_3V3_on(void) {
-  digitalWrite(_sw_3v3_pin, LOW);
+  digitalWrite(_sw_3v3_pin, HIGH);
 }
 
 void HeptaEps::switch_3V3_off(void) {
-  digitalWrite(_sw_3v3_pin, HIGH);
+  digitalWrite(_sw_3v3_pin, LOW);
 }
 
 float HeptaEps::get_5v_voltage(void) {
