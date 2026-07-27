@@ -1,11 +1,12 @@
 /**
  * @file hepta_eps_base.h
- * @brief Shared EPS implementation (battery voltage + current-sense constants).
+ * @brief Shared EPS implementation (bus voltage readout + ADC reference).
  *
- * Board-specific classes (HeptaEps, HeptaLiteEps) inherit from this base,
- * supply the battery voltage ADC pin via the protected constructor, and add
- * their own rail / current readings (MCP3208 on HEPTA-SAT, raw ADC on Lite).
- * Sketches do not include this header directly.
+ * Board-specific classes (HeptaEps, HeptaLiteEps) inherit from this base and
+ * supply the divider ADC pin plus their own divider / current-sense gains via
+ * the protected constructor (the two boards mount different hardware), then
+ * add their own rail / current readings (MCP3208 on HEPTA-SAT, raw ADC on
+ * Lite). Sketches do not include this header directly.
  */
 
 #ifndef HEPTA_EPS_BASE_H
@@ -17,22 +18,26 @@
 class HeptaEpsBase {
   public:
     void init(void);
-    float get_battery_voltage(void);
-    uint16_t get_battery_voltage_raw(void);
+    float get_bus_voltage(void);
+    uint16_t get_bus_voltage_raw(void);
 
   protected:
-    HeptaEpsBase(uint8_t bat_vol_pin) : _bat_vol_pin(bat_vol_pin) {}
+    HeptaEpsBase(uint8_t bus_vol_pin, float bus_vol_divider_gain,
+                 float galvano_gain)
+      : _bus_vol_pin(bus_vol_pin),
+        _bus_vol_divider_gain(bus_vol_divider_gain),
+        galvano_gain(galvano_gain) {}
 
-    const uint8_t _bat_vol_pin;
+    const uint8_t _bus_vol_pin;
 
     const float _adc_ref_voltage = 3.3;
     const uint16_t _adc_max_value = 4096;
 
-    // Battery voltage divider: 12k (top) / 30k (to GND)
-    // Vbat = Vadc * (R_top + R_bottom) / R_bottom = Vadc * 1.4
-    const float _bat_vol_divider_gain = (12000.0f + 30000.0f) / 30000.0f;
+    // Board-specific: Vbus = Vadc * (R_top + R_bottom) / R_bottom.
+    const float _bus_vol_divider_gain;
 
-    const float galvano_gain = 50;
+    // Board-specific current-sense amp gain over the shared 0.02 ohm shunt.
+    const float galvano_gain;
     const float galvano_resistance = 0.02;
 };
 

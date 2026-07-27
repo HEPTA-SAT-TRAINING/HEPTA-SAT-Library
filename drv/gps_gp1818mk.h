@@ -45,9 +45,10 @@ class Gps1818mk {
     /**
      * @brief Construct a new Gps1818mk object.
      * @param rx_pin Arduino pin connected to the GPS TX line (default: 13)
-     * @param tx_pin Arduino pin connected to the GPS RX line; -1 if unused (default: -1)
+     * @param tx_pin Arduino pin connected to the GPS RX line (default: 2,
+     *               GPS_TX net on HEPTA-SAT V4.1.1); -1 if unused
      */
-    Gps1818mk(pin_size_t rx_pin = 13, pin_size_t tx_pin = static_cast<pin_size_t>(-1))
+    Gps1818mk(pin_size_t rx_pin = 13, pin_size_t tx_pin = 2)
       : _rx_pin(rx_pin), _tx_pin(tx_pin) {}
 
     /** @brief Initialize the SoftwareSerial port at 9600 baud. Call once in setup(). */

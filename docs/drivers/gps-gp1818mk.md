@@ -32,7 +32,7 @@ at 9600 baud. Wrapped by the full-board [Sensor](../modules/sensor.md) (the
 
 | Method | Description |
 |--------|-------------|
-| `Gps1818mk(pin_size_t rx_pin = 13, pin_size_t tx_pin = -1)` | Construct; `rx_pin` is the GPS TX line. `tx_pin = -1` if unused. |
+| `Gps1818mk(pin_size_t rx_pin = 13, pin_size_t tx_pin = 2)` | Construct; `rx_pin` is the GPS TX line, `tx_pin` the GPS RX line (GPS_TX net, V4.1.1). Pass `-1` to disable TX. |
 | `void begin(void)` | Open SoftwareSerial at 9600 baud. Call once in `setup()`. |
 | `int read_byte(void)` | Non-blocking raw NMEA byte (0&ndash;255), or `-1` if none. |
 | `bool get_position(float* lat, float* lon, float* alt)` | Position from GPGGA. |
