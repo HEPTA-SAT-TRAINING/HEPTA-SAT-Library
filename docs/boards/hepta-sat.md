@@ -49,13 +49,13 @@ the bus current comes straight from the MCU ADC (GP28).
 | Temperature ADC | 27 |
 | BNO055 IMU | I2C (addr 0x28) |
 | GPS GP-1818MK | SoftwareSerial RX 13 / TX 2 |
-| Camera C1098 | `Serial1` (**not wired on V4.1.1**; SPI camera support is a separate phase) |
+| Camera (Arducam Mini 2MP Plus) | CS = GP0 (shared SPI); OV2640 on I2C |
 
-> **V4.1.1 note:** the UART camera (C1098) nets were removed from the board;
-> GP0 is now CAMERA_CS for a future SPI camera and GP1 is XBEE_RESET.
-> `HeptaCdh::begin()` drives CAMERA_CS high so a connected Arducam stays off the
-> shared SPI bus until a camera driver is added. The C1098 driver is kept for
-> older boards only &mdash; camera sketches do not work on V4.1.1 hardware.
+> **V4.1.1:** GP0 is `CAMERA_CS` for the Arducam Mini 2MP Plus; GP1 is
+> `XBEE_RESET`. `HeptaCdh::begin()` drives CAMERA_CS high so the camera stays
+> off the shared SPI bus until `CameraArducam2mp` selects it. JPEG capture uses
+> SPI (ArduChip FIFO) and I2C (OV2640), sharing the bus with the SD card /
+> MCP3208 and the BNO055 respectively.
 
 ## API
 

@@ -15,8 +15,8 @@ Arduino/
 ```
 
 The library targets an Arduino core that provides `SoftwareSerial`, `SD`, `SPI`,
-and a hardware `Serial1` (used by the camera). It is developed against the
-RP2040 Arduino core used by the HEPTA-Sat kit.
+and `Wire`. It is developed against the RP2040 Arduino core used by the
+HEPTA-Sat kit.
 
 ## 2. Choose your board
 
