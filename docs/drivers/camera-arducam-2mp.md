@@ -16,7 +16,7 @@ It uses Arduino `SPI` (commands / JPEG burst) and `Wire` (sensor registers) only
 | Camera CS | GP0 (shared SPI with SD + MCP3208) |
 | SPI | Mode 0, ≤ 8 MHz (driver uses 4 MHz) |
 | OV2640 I2C | 7-bit address `0x30` (same `Wire` bus as BNO055) |
-| JPEG sizes | QVGA (320×240), VGA (640×480) |
+| JPEG sizes | QQVGA 160×120, QVGA 320×240, VGA 640×480 (default), SVGA 800×600, UXGA 1600×1200 |
 
 `HeptaCdh::begin()` drives CAMERA_CS high before any SPI traffic so the camera
 stays deselected until this driver claims the bus.
@@ -37,7 +37,8 @@ stays deselected until this driver claims the bus.
   `begin()`.
 - Chunked FIFO reads release CS between packets so the SD card can share the bus.
 - OV2640 JPEG register tables in `ov2640_regs.h` are adapted from the open-source
-  ArduCAM Arduino library for QVGA/VGA only.
+  ArduCAM Arduino library (QQVGA / QVGA / VGA / SVGA / UXGA).
+- UXGA produces large JPEGs; prefer VGA or smaller when downlinking over XBee.
 
 ```cpp
 #include "drv/camera_arducam_2mp.h"

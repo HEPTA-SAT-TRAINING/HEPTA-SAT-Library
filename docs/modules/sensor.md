@@ -47,7 +47,7 @@ meters above mean sea level. `GpggaData` / `GprmcData` are defined in
 
 | Method | Description |
 |--------|-------------|
-| `bool camera_snapshot(const char* filename = "picture.jpg")` | Capture a JPEG to the SD card. Camera and SD initialization are retried after failure. |
+| `bool camera_snapshot(const char* filename = "picture.jpg", ArducamJpegSize jpeg_size = ARDUCAM_JPEG_VGA)` | Capture a JPEG to the SD card at the chosen resolution (default VGA). Camera and SD initialization are retried after failure. |
 | `void camera_invalidate(void)` | Drop cached camera setup so the next snapshot re-probes SPI / I2C. |
 
 `camera_snapshot()` invalidates stale camera state and retries automatically.
@@ -80,7 +80,8 @@ void loop() {
     // valid fix
   }
 
-  sensor.camera_snapshot("img.jpg");
+  sensor.camera_snapshot("img.jpg");  // VGA by default
+  sensor.camera_snapshot("small.jpg", ARDUCAM_JPEG_QVGA);
   delay(1000);
 }
 ```

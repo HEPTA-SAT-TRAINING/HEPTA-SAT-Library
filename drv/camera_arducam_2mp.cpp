@@ -243,9 +243,24 @@ bool CameraArducam2mp::_load_jpeg_tables(ArducamJpegSize jpeg_size) {
     return false;
   }
 
-  const Ov2640Reg* size_table =
-      (jpeg_size == ARDUCAM_JPEG_QVGA) ? OV2640_320x240_JPEG
-                                       : OV2640_640x480_JPEG;
+  const Ov2640Reg* size_table = OV2640_640x480_JPEG;
+  switch (jpeg_size) {
+    case ARDUCAM_JPEG_QQVGA:
+      size_table = OV2640_160x120_JPEG;
+      break;
+    case ARDUCAM_JPEG_QVGA:
+      size_table = OV2640_320x240_JPEG;
+      break;
+    case ARDUCAM_JPEG_VGA:
+      size_table = OV2640_640x480_JPEG;
+      break;
+    case ARDUCAM_JPEG_SVGA:
+      size_table = OV2640_800x600_JPEG;
+      break;
+    case ARDUCAM_JPEG_UXGA:
+      size_table = OV2640_1600x1200_JPEG;
+      break;
+  }
   return _sensor_write_list(size_table);
 }
 

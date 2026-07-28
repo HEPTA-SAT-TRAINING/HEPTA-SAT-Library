@@ -77,12 +77,13 @@ float HeptaSensor::get_temperature(void) {
   return temp;
 }
 
-bool HeptaSensor::camera_snapshot(const char* filename) {
+bool HeptaSensor::camera_snapshot(const char* filename,
+                                  ArducamJpegSize jpeg_size) {
   // SPI camera shares the bus with the SD card; CS stays high except during
   // short ArduChip transactions so SD access between chunks remains safe.
   uint32_t data_len = 0;
   for (uint8_t attempt = 0; attempt < 2; attempt++) {
-    if (cam.begin(ARDUCAM_JPEG_QVGA)) {
+    if (cam.begin(jpeg_size)) {
       data_len = cam.take_picture();
     }
     if (data_len > 0) {

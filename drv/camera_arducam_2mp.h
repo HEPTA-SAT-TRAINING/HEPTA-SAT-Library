@@ -14,8 +14,11 @@
 #include "ov2640_regs.h"
 
 enum ArducamJpegSize : uint8_t {
-  ARDUCAM_JPEG_QVGA = 0,  // 320x240
-  ARDUCAM_JPEG_VGA  = 1,  // 640x480
+  ARDUCAM_JPEG_QQVGA = 0,  // 160x120
+  ARDUCAM_JPEG_QVGA  = 1,  // 320x240
+  ARDUCAM_JPEG_VGA   = 2,  // 640x480 (default)
+  ARDUCAM_JPEG_SVGA  = 3,  // 800x600
+  ARDUCAM_JPEG_UXGA  = 4,  // 1600x1200
 };
 
 class CameraArducam2mp {
@@ -24,7 +27,7 @@ class CameraArducam2mp {
 
     /**
      * @brief Probe ArduChip + OV2640 and load JPEG register tables.
-     * @param jpeg_size QVGA or VGA (default VGA).
+     * @param jpeg_size One of QQVGA / QVGA / VGA / SVGA / UXGA (default VGA).
      * @return true on success.
      *
      * SPI must already be configured (e.g. by HeptaCdh / HeptaStorage).

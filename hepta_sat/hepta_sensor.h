@@ -32,7 +32,8 @@ class HeptaSensor : public HeptaSensorBase {
     bool gps_is_data_available(void);
     int  gps_read_byte(void);
 
-    bool camera_snapshot(const char* filename = "picture.jpg");
+    bool camera_snapshot(const char* filename = "picture.jpg",
+                         ArducamJpegSize jpeg_size = ARDUCAM_JPEG_VGA);
 
     /**
      * @brief Invalidate the camera driver's cached setup so the next
