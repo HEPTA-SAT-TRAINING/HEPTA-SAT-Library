@@ -20,7 +20,8 @@ automatically.
 | **EPS**    | Battery / rail voltages, current sense     | `HeptaEps` | `HeptaLiteEps` |
 | **Sensor** | BNO055 IMU, temperature, GPS, camera¹      | `HeptaSensor` | `HeptaLiteSensor` |
 
-¹ GPS (GP-1818MK) and camera (C1098) are only wired on the full `HeptaSensor`.
+¹ GPS (GP-1818MK) and camera (Arducam Mini 2MP Plus) are only wired on the full
+  `HeptaSensor`.
 
 ## XBee communication
 

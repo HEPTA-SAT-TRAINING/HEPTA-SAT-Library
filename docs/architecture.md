@@ -22,7 +22,7 @@ board-specific pin assignments and conversion formulas separate.
                                        │
                                        ▼
   driver layer                       drv/
-             AdcMcp3208 · CameraC1098 · Gps1818mk · Bno055 · Xbee · UnitRoller
+             AdcMcp3208 · CameraArducam2mp · Gps1818mk · Bno055 · Xbee · UnitRoller
 ```
 
 ## Layer responsibilities
@@ -53,7 +53,7 @@ initialization and retry policy remains shared.
 ### Driver layer (`drv/`)
 Self-contained drivers for individual chips/modules. They know nothing about
 HEPTA-SAT; they just talk to hardware (SPI/I2C/UART). Base and board classes
-compose them (e.g. `HeptaSensor` owns a `CameraC1098` and a `Gps1818mk`, while
+compose them (e.g. `HeptaSensor` owns a `CameraArducam2mp` and a `Gps1818mk`, while
 `HeptaComBase` owns an `Xbee`).
 
 ## Why this shape
