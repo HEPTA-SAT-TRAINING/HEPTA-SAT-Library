@@ -16,9 +16,9 @@ class HeptaCdh : public HeptaCdhBase {
     /**
      * @brief Hold CAMERA_CS inactive, then start Serial + SD (shared SPI bus).
      *
-     * On V4.1.1 the Arducam shares SPI with the SD card and MCP3208. GP0 must
-     * be driven high before any SPI traffic so a connected camera stays deselected
-     * until a future camera driver owns the bus.
+     * On V4.1.1 the Arducam Mini 2MP Plus shares SPI with the SD card and
+     * MCP3208. GP0 (CAMERA_CS) must be driven high before any SPI traffic so
+     * the camera stays deselected until CameraArducam2mp claims the bus.
      */
     void begin(void) {
       pinMode(_camera_cs_pin, OUTPUT);

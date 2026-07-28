@@ -78,11 +78,11 @@ float HeptaSensor::get_temperature(void) {
 }
 
 bool HeptaSensor::camera_snapshot(const char* filename) {
-  // 57600 baud (vs the max 115200) trades a little speed for far better noise/ESD
-  // immunity on the UART, which is the main trigger for the camera getting stuck.
+  // SPI camera shares the bus with the SD card; CS stays high except during
+  // short ArduChip transactions so SD access between chunks remains safe.
   uint32_t data_len = 0;
   for (uint8_t attempt = 0; attempt < 2; attempt++) {
-    if (cam.begin(C1098_BAUD_RATE_57600, C1098_JPEG_SIZE_VGA)) {
+    if (cam.begin(ARDUCAM_JPEG_VGA)) {
       data_len = cam.take_picture();
       if (data_len > 0) {
         break;
@@ -105,22 +105,27 @@ bool HeptaSensor::camera_snapshot(const char* filename) {
     return false;
   }
 
-  uint8_t buf[512];  // must be at least cam.get_packet_size() (= 512) bytes
+  uint8_t buf[512];
   uint32_t total_written = 0;
   bool read_error = false;
-  bool have_soi = false;       // JPEG SOI (FF D8) at the very start
+  bool have_soi = false;       // JPEG SOI (FF D8) somewhere near the start
   const size_t TAIL_N = 64;    // rolling window to find the EOI marker in
   uint8_t tail[TAIL_N];
   size_t  tail_len = 0;
   while (true) {
     int read_size = cam.get_image_data_packet(buf, sizeof(buf));
-    if (read_size < 0) {        // transfer fault (timeout / bad packet)
+    if (read_size < 0) {        // transfer fault
       read_error = true;
       break;
     }
     if (read_size == 0) break;  // all data received
-    if (total_written == 0 && read_size >= 2) {
-      have_soi = (buf[0] == 0xFF && buf[1] == 0xD8);
+    if (!have_soi) {
+      for (int i = 0; i + 1 < read_size; i++) {
+        if (buf[i] == 0xFF && buf[i + 1] == 0xD8) {
+          have_soi = true;
+          break;
+        }
+      }
     }
     size_t write_size = file.write(buf, read_size);
     total_written += write_size;
@@ -141,16 +146,15 @@ bool HeptaSensor::camera_snapshot(const char* filename) {
   }
   file.close();
 
-  // A correct length does not guarantee a valid image, so verify the JPEG markers.
-  // The C1098 appends a few padding bytes after the EOI (FF D9), so search the tail
-  // for the marker rather than requiring it to be the exact last two bytes.
+  // FIFO length can include a few padding bytes around the JPEG, so require
+  // SOI/EOI markers rather than an exact length match alone.
   bool have_eoi = false;
   for (size_t i = 0; i + 1 < tail_len; i++) {
     if (tail[i] == 0xFF && tail[i + 1] == 0xD9) { have_eoi = true; break; }
   }
   bool jpeg_ok = have_soi && have_eoi;
 
-  if (read_error || total_written != data_len || !jpeg_ok) {
+  if (read_error || total_written == 0 || total_written > data_len || !jpeg_ok) {
     cam.invalidate();
     Serial.print("Capture invalid: expected ");
     Serial.print(data_len);
@@ -169,9 +173,8 @@ bool HeptaSensor::camera_snapshot(const char* filename) {
 }
 
 void HeptaSensor::camera_invalidate(void) {
-  // Drop the cached setup so the next camera_snapshot() runs a full SYNC + INITIAL
-  // at 14400 baud. Call after a camera failure so that once the operator physically
-  // power-cycles the camera (which boots back to 14400) the driver re-syncs instead
-  // of assuming the stale negotiated-baud configuration is still valid.
+  // Drop the cached setup so the next camera_snapshot() re-probes the ArduChip
+  // and OV2640. Call after a camera failure so that once the operator power-cycles
+  // the camera the driver starts clean instead of assuming stale state.
   cam.invalidate();
 }

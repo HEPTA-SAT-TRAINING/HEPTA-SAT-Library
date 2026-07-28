@@ -5,7 +5,7 @@ Classes: `HeptaSensor` (full) / `HeptaLiteSensor` (Lite), both deriving from
 
 The base provides the **BNO055 9-axis IMU** and an analog **temperature** reading.
 The full-board `HeptaSensor` additionally exposes **GPS** (GP-1818MK) and a
-**camera** (C1098). The Lite board has IMU + temperature only.
+**camera** (Arducam Mini 2MP Plus). The Lite board has IMU + temperature only.
 
 ## Shared API (`HeptaSensorBase`)
 
@@ -48,13 +48,13 @@ meters above mean sea level. `GpggaData` / `GprmcData` are defined in
 | Method | Description |
 |--------|-------------|
 | `bool camera_snapshot(const char* filename = "picture.jpg")` | Capture a JPEG to the SD card. Camera and SD initialization are retried after failure. |
-| `void camera_invalidate(void)` | Drop cached camera setup so the next snapshot re-syncs from 14400 baud. |
+| `void camera_invalidate(void)` | Drop cached camera setup so the next snapshot re-probes SPI / I2C. |
 
 `camera_snapshot()` invalidates stale camera state and retries automatically.
 `camera_invalidate()` remains available for an explicit power-cycle workflow.
 The camera VCC is not on an MCU-controllable rail, so some hardware faults still
 need an operator power-cycle. See
-[drivers/camera-c1098.md](../drivers/camera-c1098.md).
+[drivers/camera-arducam-2mp.md](../drivers/camera-arducam-2mp.md).
 
 ## Lite board &mdash; `HeptaLiteSensor`
 
