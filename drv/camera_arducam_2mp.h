@@ -52,6 +52,7 @@ class CameraArducam2mp {
   private:
     static constexpr uint8_t ARDUCHIP_TEST1  = 0x00;
     static constexpr uint8_t ARDUCHIP_FIFO   = 0x04;
+    static constexpr uint8_t ARDUCHIP_GPIO   = 0x06;
     static constexpr uint8_t CPLD_RESET_REG  = 0x07;
     static constexpr uint8_t BURST_FIFO_READ = 0x3C;
     static constexpr uint8_t ARDUCHIP_TRIG   = 0x41;
@@ -62,6 +63,9 @@ class CameraArducam2mp {
     static constexpr uint8_t FIFO_CLEAR_MASK = 0x01;
     static constexpr uint8_t FIFO_START_MASK = 0x02;
     static constexpr uint8_t CAP_DONE_MASK   = 0x08;
+    static constexpr uint8_t GPIO_RESET_MASK = 0x01;  // 1 = sensor normal
+    static constexpr uint8_t GPIO_PWDN_MASK  = 0x02;  // 1 = sensor standby
+    static constexpr uint8_t GPIO_PWREN_MASK = 0x04;  // 1 = sensor LDO enable
 
     static constexpr uint32_t MAX_FIFO_SIZE      = 0x7FFFF;  // 512 KiB (2MP Plus)
     static constexpr uint32_t CAPTURE_TIMEOUT_MS = 3000;

@@ -19,11 +19,19 @@ bool CameraArducam2mp::begin(ArducamJpegSize jpeg_size) {
   _cs_high();
 
   Wire.begin();
+  Wire.setClock(100000);
 
   // CPLD soft-reset used by Arducam Mini 2MP Plus examples.
   _spi_write_reg(CPLD_RESET_REG, 0x80);
   delay(100);
   _spi_write_reg(CPLD_RESET_REG, 0x00);
+  delay(100);
+
+  // ArduChip GPIO 0x06: sensor LDO on, out of reset, not in PWDN.
+  const uint8_t gpio = _spi_read_reg(ARDUCHIP_GPIO);
+  _spi_write_reg(ARDUCHIP_GPIO,
+                 static_cast<uint8_t>((gpio | GPIO_PWREN_MASK | GPIO_RESET_MASK) &
+                                      static_cast<uint8_t>(~GPIO_PWDN_MASK)));
   delay(100);
 
   if (!_probe_spi()) {
@@ -36,11 +44,26 @@ bool CameraArducam2mp::begin(ArducamJpegSize jpeg_size) {
     invalidate();
     return false;
   }
+
+  // Official ArduCAM InitCAM: soft-reset sensor bank, wait, then load tables.
+  _sensor_write(0xFF, 0x01);
+  _sensor_write(0x12, 0x80);
+  delay(100);
+
   if (!_load_jpeg_tables(jpeg_size)) {
     Serial.println("Arducam: JPEG init failed.");
     invalidate();
     return false;
   }
+
+  // Re-assert JPEG mode after size tables (OV2640_JPEG apply sequence).
+  _sensor_write(0xFF, 0x00);
+  _sensor_write(0xE0, 0x14);
+  _sensor_write(0xDA, 0x10);
+  _sensor_write(0xE0, 0x00);
+
+  // Official ArduCAM examples settle ~1s after size tables.
+  delay(1000);
 
   _jpeg_size = jpeg_size;
   _initialized = true;
@@ -66,7 +89,7 @@ uint32_t CameraArducam2mp::take_picture(void) {
     return 0;
   }
 
-  uint32_t len = _read_fifo_length();
+  const uint32_t len = _read_fifo_length();
   if (len == 0 || len >= MAX_FIFO_SIZE) {
     Serial.print("Arducam: bad FIFO length ");
     Serial.println(len);
@@ -150,7 +173,10 @@ bool CameraArducam2mp::_sensor_write(uint8_t reg, uint8_t val) {
   Wire.beginTransmission(OV2640_I2C_ADDR);
   Wire.write(reg);
   Wire.write(val);
-  return Wire.endTransmission() == 0;
+  // ArduCAM wrSensorReg8_8 paces SCCB with 1 ms after every write.
+  const bool ok = Wire.endTransmission() == 0;
+  delay(1);
+  return ok;
 }
 
 bool CameraArducam2mp::_sensor_read(uint8_t reg, uint8_t* val) {
@@ -159,13 +185,15 @@ bool CameraArducam2mp::_sensor_read(uint8_t reg, uint8_t* val) {
   }
   Wire.beginTransmission(OV2640_I2C_ADDR);
   Wire.write(reg);
-  if (Wire.endTransmission() != 0) {
+  // Match BNO055 on this board: repeated start before the read phase.
+  if (Wire.endTransmission(false) != 0) {
     return false;
   }
   if (Wire.requestFrom(static_cast<uint8_t>(OV2640_I2C_ADDR), static_cast<uint8_t>(1)) != 1) {
     return false;
   }
   *val = Wire.read();
+  delay(1);
   return true;
 }
 
@@ -174,8 +202,8 @@ bool CameraArducam2mp::_sensor_write_list(const Ov2640Reg* list) {
     return false;
   }
   for (size_t i = 0;; i++) {
-    uint8_t reg = pgm_read_byte(&list[i].reg);
-    uint8_t val = pgm_read_byte(&list[i].val);
+    const uint8_t reg = list[i].reg;
+    const uint8_t val = list[i].val;
     if (reg == 0xFF && val == 0xFF) {
       break;
     }

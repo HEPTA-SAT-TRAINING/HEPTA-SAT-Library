@@ -82,11 +82,11 @@ bool HeptaSensor::camera_snapshot(const char* filename) {
   // short ArduChip transactions so SD access between chunks remains safe.
   uint32_t data_len = 0;
   for (uint8_t attempt = 0; attempt < 2; attempt++) {
-    if (cam.begin(ARDUCAM_JPEG_VGA)) {
+    if (cam.begin(ARDUCAM_JPEG_QVGA)) {
       data_len = cam.take_picture();
-      if (data_len > 0) {
-        break;
-      }
+    }
+    if (data_len > 0) {
+      break;
     }
     cam.invalidate();
     delay(100);
@@ -108,10 +108,9 @@ bool HeptaSensor::camera_snapshot(const char* filename) {
   uint8_t buf[512];
   uint32_t total_written = 0;
   bool read_error = false;
-  bool have_soi = false;       // JPEG SOI (FF D8) somewhere near the start
-  const size_t TAIL_N = 64;    // rolling window to find the EOI marker in
-  uint8_t tail[TAIL_N];
-  size_t  tail_len = 0;
+  bool have_soi = false;
+  bool have_eoi = false;
+  uint8_t prev = 0;
   while (true) {
     int read_size = cam.get_image_data_packet(buf, sizeof(buf));
     if (read_size < 0) {        // transfer fault
@@ -119,13 +118,16 @@ bool HeptaSensor::camera_snapshot(const char* filename) {
       break;
     }
     if (read_size == 0) break;  // all data received
-    if (!have_soi) {
-      for (int i = 0; i + 1 < read_size; i++) {
-        if (buf[i] == 0xFF && buf[i + 1] == 0xD8) {
-          have_soi = true;
-          break;
-        }
+    for (int i = 0; i < read_size; i++) {
+      const uint8_t b = buf[i];
+      if (!have_soi && prev == 0xFF && b == 0xD8) {
+        have_soi = true;
       }
+      // FIFO often has padding after JPEG; accept EOI anywhere in the stream.
+      if (!have_eoi && prev == 0xFF && b == 0xD9) {
+        have_eoi = true;
+      }
+      prev = b;
     }
     size_t write_size = file.write(buf, read_size);
     total_written += write_size;
@@ -134,24 +136,9 @@ bool HeptaSensor::camera_snapshot(const char* filename) {
       storage_.invalidate();
       break;
     }
-    // Keep the last TAIL_N bytes of the whole stream for the EOI search.
-    for (int i = 0; i < read_size; i++) {
-      if (tail_len < TAIL_N) {
-        tail[tail_len++] = buf[i];
-      } else {
-        memmove(tail, tail + 1, TAIL_N - 1);
-        tail[TAIL_N - 1] = buf[i];
-      }
-    }
   }
   file.close();
 
-  // FIFO length can include a few padding bytes around the JPEG, so require
-  // SOI/EOI markers rather than an exact length match alone.
-  bool have_eoi = false;
-  for (size_t i = 0; i + 1 < tail_len; i++) {
-    if (tail[i] == 0xFF && tail[i + 1] == 0xD9) { have_eoi = true; break; }
-  }
   bool jpeg_ok = have_soi && have_eoi;
 
   if (read_error || total_written == 0 || total_written > data_len || !jpeg_ok) {

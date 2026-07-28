@@ -20,7 +20,7 @@ struct Ov2640Reg {
 #define OV2640_CHIPID_LOW  0x0B
 #define OV2640_I2C_ADDR    0x30  // 7-bit address (8-bit write addr 0x60)
 
-const Ov2640Reg OV2640_JPEG_INIT[] PROGMEM = {
+const Ov2640Reg OV2640_JPEG_INIT[] = {
   {0xff, 0x00},
   {0x2c, 0xff},
   {0x2e, 0xdf},
@@ -216,7 +216,7 @@ const Ov2640Reg OV2640_JPEG_INIT[] PROGMEM = {
   {0xff, 0xff}
 };
 
-const Ov2640Reg OV2640_YUV422[] PROGMEM = {
+const Ov2640Reg OV2640_YUV422[] = {
   {0xFF, 0x00},
   {0x05, 0x00},
   {0xDA, 0x10},
@@ -229,7 +229,7 @@ const Ov2640Reg OV2640_YUV422[] PROGMEM = {
   {0xff, 0xff}
 };
 
-const Ov2640Reg OV2640_JPEG[] PROGMEM = {
+const Ov2640Reg OV2640_JPEG[] = {
   {0xe0, 0x14},
   {0xe1, 0x77},
   {0xe5, 0x1f},
@@ -241,7 +241,7 @@ const Ov2640Reg OV2640_JPEG[] PROGMEM = {
   {0xff, 0xff}
 };
 
-const Ov2640Reg OV2640_320x240_JPEG[] PROGMEM = {
+const Ov2640Reg OV2640_320x240_JPEG[] = {
   {0xff, 0x01},
   {0x12, 0x40},
   {0x17, 0x11},
@@ -284,7 +284,7 @@ const Ov2640Reg OV2640_320x240_JPEG[] PROGMEM = {
   {0xff, 0xff}
 };
 
-const Ov2640Reg OV2640_640x480_JPEG[] PROGMEM = {
+const Ov2640Reg OV2640_640x480_JPEG[] = {
   {0xff, 0x01},
   {0x11, 0x01},
   {0x12, 0x00},
