@@ -13,7 +13,7 @@
 class Xbee {
   public:
     Xbee(uint8_t rx_pin, uint8_t tx_pin)
-      : serial_(rx_pin, tx_pin), last_error_(nullptr) {}
+      : serial_(rx_pin, tx_pin), last_error_(nullptr), started_(false) {}
 
     bool begin(void);
 
@@ -45,6 +45,7 @@ class Xbee {
   private:
     SoftwareSerial serial_;
     const char* last_error_;
+    bool started_;
 
     void clear_input(void);
     bool wait_for_response(const char* expected, uint32_t timeout_ms);

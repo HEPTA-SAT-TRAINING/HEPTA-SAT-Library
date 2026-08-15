@@ -15,7 +15,15 @@ constexpr int XBEE_BUFFER_OVERFLOW = -2;
 
 
 bool Xbee::begin(void) {
+  // Arduino-Pico SoftwareSerial claims PIO state machines on begin().
+  // Calling begin() again without end() leaks SMs and can hang USB CDC
+  // (seen after camera SPI, when Lab99 retries AT with com.begin()).
+  if (started_) {
+    serial_.end();
+    delay(1);
+  }
   serial_.begin(XBEE_BAUD_RATE);
+  started_ = true;
   last_error_ = nullptr;
   return true;
 }
