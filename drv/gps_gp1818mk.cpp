@@ -25,7 +25,18 @@ static float nmea_to_decimal(float nmea_value) {
 void Gps1818mk::begin(void) {
   if (!_serial) {
     _serial = new SoftwareSerial(_rx_pin, _tx_pin);
-    _serial->begin(9600);
+  } else if (_started) {
+    _serial->end();
+    delay(1);
+  }
+  _serial->begin(9600);
+  _started = true;
+}
+
+void Gps1818mk::end(void) {
+  if (_serial && _started) {
+    _serial->end();
+    _started = false;
   }
 }
 

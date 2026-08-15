@@ -31,6 +31,8 @@ class HeptaSensor : public HeptaSensorBase {
     bool gps_get_gprmc(GprmcData* out);
     bool gps_is_data_available(void);
     int  gps_read_byte(void);
+    void gps_end(void);
+    void gps_begin(void);
 
     bool camera_snapshot(const char* filename = "picture.jpg",
                          ArducamJpegSize jpeg_size = ARDUCAM_JPEG_VGA);
