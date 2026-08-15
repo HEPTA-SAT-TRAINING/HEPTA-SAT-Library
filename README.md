@@ -37,8 +37,8 @@ kit:
 - `DH` / `DL` for the peer XBee
 - `BD=5` (38400 baud)
 
-The library always opens the XBee UART at 38400 baud. The baud rate is not
-specified by sketches.
+The library opens the XBee UART at 38400 baud by default. Lab99 can reopen
+it at 9600 via `set_uart_baud()` if factory-default AT fails.
 
 `send()` transmits exactly the bytes supplied. It does not append a newline:
 

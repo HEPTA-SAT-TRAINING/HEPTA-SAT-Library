@@ -25,6 +25,7 @@ class HeptaComBase {
     static constexpr uint8_t IMAGE_ERROR_INTERNAL_BUFFER = 0x04;
 
     bool begin(void);
+    bool set_uart_baud(uint32_t baud);
 
     bool send(const char* text);
     bool send(const uint8_t* data, size_t length);

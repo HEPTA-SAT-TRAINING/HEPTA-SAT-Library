@@ -14,7 +14,8 @@ The initial implementation targets XBee AT / Transparent mode.
 
 | Method | Description |
 |--------|-------------|
-| `bool begin()` | Start the XBee SoftwareSerial port at the fixed 38400 baud rate. |
+| `bool begin()` | Start the XBee SoftwareSerial port at 38400 baud. |
+| `bool set_uart_baud(uint32_t baud)` | Reopen the XBee UART at `baud` (`end()` then `begin()`). |
 | `size_t print(...)` / `println(...)` / `printf(...)` | Formatted downlink output (same signatures as CDH). |
 | `size_t write(uint8_t)` / `write(const uint8_t*, size_t)` | Raw byte output (same signatures as CDH). |
 | `bool is_cmd_received()` | Return whether a command byte is waiting on the XBee link. |
