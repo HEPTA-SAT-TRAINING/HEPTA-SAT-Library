@@ -227,6 +227,7 @@ bool Xbee::send_at_command(const char* command,
   }
 
   response[0] = '\0';
+  clear_input();
   if (!send(command)) {
     return false;
   }
