@@ -1,6 +1,6 @@
 /**
  * @file hepta_com.h
- * @brief HEPTA-SAT COM: XBee SoftwareSerial RX/TX pins.
+ * @brief HEPTA-SAT COM: XBee SoftwareSerial RX/TX pins + reset line (V4.1.1).
  */
 
 #ifndef HEPTA_COM_H
@@ -14,6 +14,24 @@ class HeptaCom : public HeptaComBase {
     HeptaCom()
       : HeptaComBase(/*rx=*/15, /*tx=*/14,
                      /*sd_cs=*/3, /*sd_tx=*/19, /*sd_rx=*/16, /*sd_sck=*/18) {}
+
+    /** @brief Deassert XBEE_RESET (GP1), then start the XBee serial port. */
+    bool begin(void) {
+      pinMode(_xbee_reset_pin, OUTPUT);
+      digitalWrite(_xbee_reset_pin, HIGH);
+      return HeptaComBase::begin();
+    }
+
+    /** @brief Hardware-reset the XBee via the active-low RESET line. */
+    void xbee_reset(void) {
+      digitalWrite(_xbee_reset_pin, LOW);
+      delay(5);
+      digitalWrite(_xbee_reset_pin, HIGH);
+      delay(100);  // give the module time to reboot
+    }
+
+  private:
+    const uint8_t _xbee_reset_pin = 1;
 };
 
 
