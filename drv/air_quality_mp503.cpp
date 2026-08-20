@@ -15,7 +15,6 @@ bool AirQualityMp503::begin(AdcMcp3208 *adc, uint8_t channel, bool skip_warmup) 
     return false;
   }
 
-  _use_direct_adc = false;
   _adc = adc;
   _channel = channel;
   _initialized = false;
@@ -43,43 +42,6 @@ bool AirQualityMp503::begin(uint8_t cs_pin, uint8_t channel, float ref_vol,
                             bool skip_warmup) {
   _owned_adc.begin(cs_pin, ref_vol);
   return begin(&_owned_adc, channel, skip_warmup);
-}
-
-bool AirQualityMp503::begin(bool use_mcp3208, uint8_t direct_adc_pin, uint8_t channel,
-                            uint8_t cs_pin, float ref_vol, bool skip_warmup) {
-  if (use_mcp3208) {
-    return begin(cs_pin, channel, ref_vol, skip_warmup);
-  }
-
-  if (direct_adc_pin < 26 || direct_adc_pin > 29) {
-    return false;
-  }
-
-  _use_direct_adc = true;
-  _adc = NULL;
-  _direct_adc_pin = direct_adc_pin;
-  _initialized = false;
-
-  analogReadResolution(12);
-  pinMode(_direct_adc_pin, INPUT);
-
-  if (!skip_warmup) {
-    delay(20000);
-  }
-
-  uint16_t init_voltage = _read_adc();
-  if (init_voltage <= INIT_MIN || init_voltage >= INIT_MAX) {
-    return false;
-  }
-
-  _current_voltage = init_voltage;
-  _last_voltage = init_voltage;
-  _standard_voltage = init_voltage;
-  _last_std_vol_updated = millis();
-  _voltage_sum = 0;
-  _vol_sum_count = 0;
-  _initialized = true;
-  return true;
 }
 
 AirQualityMp503::QualityLevel AirQualityMp503::slope(void) {
@@ -127,9 +89,6 @@ void AirQualityMp503::_update_standard_voltage(void) {
 }
 
 uint16_t AirQualityMp503::_read_adc(void) {
-  if (_use_direct_adc) {
-    return static_cast<uint16_t>(analogRead(_direct_adc_pin));
-  }
   if (_adc == NULL) {
     return 0;
   }

@@ -27,26 +27,17 @@ class AirQualityMp503 {
     /**
      * @brief Initialize with an existing MCP3208 driver instance.
      * @param adc Pointer to a configured AdcMcp3208 (e.g. shared with EPS)
-     * @param channel MCP3208 channel (default 5 = USER1 on V4.1.1)
+     * @param channel MCP3208 channel (V4.1.1 USER1/2/3 = CH5/6/7)
      * @param skip_warmup Skip the built-in 20 s warm-up delay when already done externally
      */
     bool begin(AdcMcp3208 *adc, uint8_t channel = 5, bool skip_warmup = false);
 
     /**
      * @brief Initialize a local MCP3208 on the given chip-select pin.
+     * @param channel MCP3208 channel (V4.1.1 USER1/2/3 = CH5/6/7)
      */
     bool begin(uint8_t cs_pin, uint8_t channel = 5, float ref_vol = 3.3f,
                bool skip_warmup = false);
-
-    /**
-     * @brief Initialize using MCP3208 or the MCU ADC pin (GP26–GP29).
-     * @param use_mcp3208 true: MCP3208, false: direct MCU ADC
-     * @param direct_adc_pin MCU GPIO for analog input when use_mcp3208 is false
-     * @param channel MCP3208 channel when use_mcp3208 is true
-     * @param cs_pin MCP3208 chip-select when use_mcp3208 is true
-     */
-    bool begin(bool use_mcp3208, uint8_t direct_adc_pin, uint8_t channel, uint8_t cs_pin,
-               float ref_vol = 3.3f, bool skip_warmup = false);
 
     /**
      * @brief Classify air quality using the Seeed slope() algorithm.
@@ -64,8 +55,6 @@ class AirQualityMp503 {
     AdcMcp3208 *_adc = NULL;
     AdcMcp3208 _owned_adc;
     uint8_t _channel = 5;
-    uint8_t _direct_adc_pin = 28;
-    bool _use_direct_adc = false;
     bool _initialized = false;
 
     uint16_t _current_voltage = 0;
