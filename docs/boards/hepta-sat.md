@@ -43,6 +43,16 @@ Rail voltages and the solar/charge currents are read through an external
 **MCP3208** ADC (see [drivers/adc-mcp3208.md](../drivers/adc-mcp3208.md));
 the bus current comes straight from the MCU ADC (GP28).
 
+### OBC (MCU board)
+| Signal | Pin |
+|--------|----:|
+| Status LED 1 (`HEPTA_OBC_LED1`) | 25 |
+| Status LED 2 (`HEPTA_OBC_LED2`) | 29 |
+| Status LED 3 (`HEPTA_OBC_LED3`) | 24 |
+
+Include [hepta_obc_pins.h](../../hepta_sat/hepta_obc_pins.h) via `HeptaSat.h` for the
+`HEPTA_OBC_LED*` constants and the `HEPTA_OBC_LEDS[]` array.
+
 ### Sensor
 | Signal | Pin |
 |--------|----:|
