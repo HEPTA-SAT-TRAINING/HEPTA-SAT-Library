@@ -52,7 +52,24 @@ bool Bme280::begin(uint8_t addr, uint8_t sda_pin, uint8_t scl_pin) {
   if (!_write_reg(BME280_REG_RESET, 0xB6)) {
     return false;
   }
-  delay(10);
+
+  {
+    const uint32_t timeout_ms = 100;
+    const uint32_t start_ms = millis();
+    while (true) {
+      uint8_t status = 0;
+      if (!_read_reg(BME280_REG_STATUS, &status)) {
+        return false;
+      }
+      if ((status & 0x01) == 0) {
+        break;
+      }
+      if (millis() - start_ms >= timeout_ms) {
+        return false;
+      }
+      delay(1);
+    }
+  }
 
   if (!_load_calibration() || !_configure_sensor()) {
     return false;
