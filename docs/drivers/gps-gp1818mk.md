@@ -72,3 +72,23 @@ void loop() {
   }
 }
 ```
+
+## Non-blocking async API
+
+For high-rate telemetry loops, use the async parser in
+[common/gps_async.h](../../common/gps_async.h) instead of the blocking
+`get_gpgga()` / `get_gprmc()` methods.
+
+| Function | Description |
+|----------|-------------|
+| `void gps_async_init(void)` | Initialize the mutex. Call once before multicore GPS service starts. |
+| `void gps_async_begin(Gps1818mk* gps)` | Bind a driver instance (called from `HeptaSensor::begin()`). |
+| `void gps_service(void)` | Drain available NMEA bytes and update the cached `GpsFix`. Non-blocking. |
+| `bool gps_get_latest(GpsFix* out)` | Copy the latest cached fix. Safe from any core. Returns `true` if `has_fix`. |
+
+`HeptaSensor` exposes thin wrappers: `gps_service()` and `gps_get_latest()`.
+Run `gps_service()` on core 1 (`loop1()`) and read the cache from core 0.
+
+See [common/gps_fix.h](../../common/gps_fix.h) for the `GpsFix` struct.
+GPGGA updates set `fix_millis`; compare this value to detect new GPS rows
+without blocking the main loop.
