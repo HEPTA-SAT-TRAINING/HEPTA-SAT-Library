@@ -180,6 +180,27 @@ bool HeptaCdhBase::remove_file(const char *path) {
   return _storage.remove(path);
 }
 
+bool HeptaCdhBase::format_sd(void) {
+  return _storage.format();
+}
+
+uint8_t HeptaCdhBase::format_sd_error_stage(void) const {
+  return _storage.format_error_stage();
+}
+
+uint8_t HeptaCdhBase::format_sd_error_code(void) const {
+  return _storage.format_error_code();
+}
+
+uint8_t HeptaCdhBase::format_sd_error_data(void) const {
+  return _storage.format_error_data();
+}
+
+bool HeptaCdhBase::list_files(bool (*callback)(const char *name, uint32_t size, void *ctx),
+                              void *ctx) {
+  return _storage.list_files(callback, ctx);
+}
+
 size_t HeptaCdhBase::write_file(File &file, const char *text) {
   if (!file || text == NULL) {
     return 0;

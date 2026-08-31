@@ -22,6 +22,12 @@ class HeptaStorage {
     File open(const char* path, int mode = FILE_READ);
     bool exists(const char* path);
     bool remove(const char* path);
+    bool format(void);
+    uint8_t format_error_stage(void) const { return _format_error_stage; }
+    uint8_t format_error_code(void) const { return _format_error_code; }
+    uint8_t format_error_data(void) const { return _format_error_data; }
+    bool list_files(bool (*callback)(const char* name, uint32_t size, void* ctx),
+                    void* ctx = nullptr);
 
   private:
     bool ensure_ready(void);
@@ -31,6 +37,9 @@ class HeptaStorage {
     const uint8_t _rx_pin;
     const uint8_t _sck_pin;
     bool _initialized = false;
+    uint8_t _format_error_stage = 0;
+    uint8_t _format_error_code = 0;
+    uint8_t _format_error_data = 0;
 };
 
 
