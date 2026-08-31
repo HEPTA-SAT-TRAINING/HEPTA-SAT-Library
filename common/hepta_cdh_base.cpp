@@ -201,6 +201,10 @@ bool HeptaCdhBase::list_files(bool (*callback)(const char *name, uint32_t size, 
   return _storage.list_files(callback, ctx);
 }
 
+bool HeptaCdhBase::rename_file(const char *from_path, const char *to_path) {
+  return _storage.rename(from_path, to_path);
+}
+
 size_t HeptaCdhBase::write_file(File &file, const char *text) {
   if (!file || text == NULL) {
     return 0;

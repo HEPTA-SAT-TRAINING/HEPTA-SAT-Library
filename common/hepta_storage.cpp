@@ -188,6 +188,19 @@ bool HeptaStorage::list_files(bool (*callback)(const char* name, uint32_t size, 
   return true;
 }
 
+bool HeptaStorage::rename(const char* from_path, const char* to_path) {
+  if (from_path == nullptr || to_path == nullptr || !ensure_ready()) {
+    return false;
+  }
+
+  if (SD.rename(from_path, to_path)) {
+    return true;
+  }
+
+  invalidate();
+  return begin() && SD.rename(from_path, to_path);
+}
+
 bool HeptaStorage::ensure_ready(void) {
   return _initialized || begin();
 }

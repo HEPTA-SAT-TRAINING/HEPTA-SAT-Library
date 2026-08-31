@@ -28,6 +28,7 @@ class HeptaStorage {
     uint8_t format_error_data(void) const { return _format_error_data; }
     bool list_files(bool (*callback)(const char* name, uint32_t size, void* ctx),
                     void* ctx = nullptr);
+    bool rename(const char* from_path, const char* to_path);
 
   private:
     bool ensure_ready(void);
