@@ -1,10 +1,13 @@
 #include "hepta_sensor.h"
 
+#include "../common/gps_async.h"
+
 bool HeptaSensor::begin(void) {
   // Run the shared sensor init (ADC resolution, temp pin, BNO055) first,
   // then bring up the GPS SoftwareSerial port.
   bool ok = HeptaSensorBase::begin();
   gps.begin();
+  gps_async_begin(&gps);
   return ok;
 }
 
@@ -35,6 +38,14 @@ bool HeptaSensor::gps_is_data_available(void) {
 
 int HeptaSensor::gps_read_byte(void) {
   return gps.read_byte();
+}
+
+void HeptaSensor::gps_service(void) {
+  ::gps_service();
+}
+
+bool HeptaSensor::gps_get_latest(GpsFix* out) {
+  return ::gps_get_latest(out);
 }
 
 float HeptaSensor::get_temperature(void) {

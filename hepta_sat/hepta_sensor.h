@@ -6,6 +6,7 @@
 #ifndef HEPTA_SENSOR_H
 #define HEPTA_SENSOR_H
 
+#include "../common/gps_fix.h"
 #include "../common/hepta_sensor_base.h"
 #include "../common/hepta_storage.h"
 #include "../drv/camera_arducam_2mp.h"
@@ -31,6 +32,9 @@ class HeptaSensor : public HeptaSensorBase {
     bool gps_get_gprmc(GprmcData* out);
     bool gps_is_data_available(void);
     int  gps_read_byte(void);
+
+    void gps_service(void);
+    bool gps_get_latest(GpsFix* out);
 
     bool camera_snapshot(const char* filename = "picture.jpg",
                          ArducamJpegSize jpeg_size = ARDUCAM_JPEG_VGA);
