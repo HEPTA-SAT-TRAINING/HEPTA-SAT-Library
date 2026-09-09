@@ -23,7 +23,6 @@ automatically.
 GPS (GP-1818MK) and camera (Arducam Mini 2MP Plus) are only wired on the full
 `HeptaSensor`. Lite uses an onboard BME280 (same Wire bus as the IMU) for
 temperature, humidity, and pressure.
-
 ## XBee communication
 
 HeptaCom v0.1 is a high-level wrapper for an XBee operating in AT /

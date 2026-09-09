@@ -47,6 +47,13 @@ class HeptaCdhBase {
     File append_file(const char *path);
     bool file_exists(const char *path);
     bool remove_file(const char *path);
+    bool format_sd(void);
+    uint8_t format_sd_error_stage(void) const;
+    uint8_t format_sd_error_code(void) const;
+    uint8_t format_sd_error_data(void) const;
+    bool list_files(bool (*callback)(const char *name, uint32_t size, void *ctx),
+                    void *ctx = nullptr);
+    bool rename_file(const char *from_path, const char *to_path);
     size_t write_file(File &file, const char *text);
     size_t write_file(File &file, const uint8_t *buffer, size_t size);
     int read_file(File &file);
