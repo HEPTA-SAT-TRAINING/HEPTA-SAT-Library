@@ -27,7 +27,7 @@ class HeptaCom : public HeptaComBase {
       digitalWrite(_xbee_reset_pin, LOW);
       delay(5);
       digitalWrite(_xbee_reset_pin, HIGH);
-      delay(100);  // give the module time to reboot
+      delay(1000);  // XBee UART is ready ~1 s after RESET
     }
 
   private:

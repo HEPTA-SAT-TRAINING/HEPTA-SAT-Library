@@ -4,14 +4,16 @@ Classes: `HeptaEps` (full) / `HeptaLiteEps` (Lite), both deriving from
 `HeptaEpsBase` ([common/hepta_eps_base.h](../../common/hepta_eps_base.h)).
 
 EPS reads the main bus voltage on both boards (schematic net `VBAT_DIVIDER`;
-on V4.1.1 hardware this is the spacecraft bus, not the battery cell directly).
-The two boards differ in how they measure rail voltages and currents:
+this is the spacecraft bus, not the battery cell directly). Both boards use
+the same bus divider and current-sense hardware as of Lite Ver4.2.0 / Full
+V4.1.1:
 
-- **Full board (V4.1.1)** &mdash; an external **MCP3208** SPI ADC reads the
-  5V / 3V3 / SAP rails and the solar/charge current sense; the bus
-  current is read directly off the MCU ADC (GP28, MAX4372T output). The 3V3
-  rail can be switched.
-- **Lite board** &mdash; charge/discharge current is read directly off the MCU's ADC.
+- **MCP3208** SPI ADC for 5V / 3V3 / SAP rails and solar current
+- Bus current on the MCU ADC (GP28, MAX4372T output)
+- 3V3 rail can be switched (GP20, active-high)
+
+Lite has **no charge-current sense**. MCP3208 CH4 is USER on Lite; Full uses
+CH4 for charge current (`get_current_charge()`).
 
 ## Shared API (`HeptaEpsBase`)
 
@@ -21,13 +23,11 @@ The two boards differ in how they measure rail voltages and currents:
 | `float get_bus_voltage(void)` | Main bus voltage in volts. |
 | `uint16_t get_bus_voltage_raw(void)` | Raw ADC reading. |
 
-Both boards measure against a 3.3 V, 12-bit reference, but each board class
-supplies its own divider and current-sense gains to `HeptaEpsBase`:
+Both boards measure against a 3.3 V, 12-bit reference and supply the same
+divider / current-sense gains to `HeptaEpsBase`:
 
-- **Full board (V4.1.1)** &mdash; 1.3k/1.5k bus divider (gain ~1.867);
-  current sensing uses a MAX4372T (gain 20) over a 0.02 Ω shunt.
-- **Lite board** &mdash; 12k/30k battery divider (gain 1.4); current sensing
-  uses a gain-50 amp over a 0.02 Ω shunt (hardware unchanged by V4.1.1).
+- Bus divider 1.3k/1.5k (gain ~1.867)
+- MAX4372T (gain 20) over a 0.02 Ω shunt
 
 ## Full board &mdash; `HeptaEps`
 
@@ -50,10 +50,21 @@ voltage, CH3 = solar current, CH4 = charge current, CH5&ndash;CH7 = user payload
 
 ## Lite board &mdash; `HeptaLiteEps`
 
+Same rail / solar / bus-current API as Full. **No** `get_current_charge()`
+and **no** `get_current_discharge()`.
+
+MCP3208 channel map (Ver4.2.0): CH0 = 5V, CH1 = 3V3, CH2 = SAP voltage,
+CH3 = solar current, CH4 = USER.
+
 | Method | Description |
 |--------|-------------|
-| `float get_current_discharge(void)` | Discharge current (ADC pin 27). |
-| `float get_current_charge(void)` | Charge current (ADC pin 28). |
+| `void init(void)` | Initialize EPS + MCP3208 ADC. |
+| `void switch_3V3_on(void)` / `switch_3V3_off(void)` | Toggle the 3V3 rail (pin 20; active-high: HIGH = ON). |
+| `float get_5v_voltage(void)` | 5V rail voltage (MCP3208 CH0). |
+| `float get_3v3_voltage(void)` | 3V3 rail voltage (MCP3208 CH1). |
+| `float get_sap_voltage(void)` | Solar-array panel voltage (MCP3208 CH2, divider-corrected). |
+| `float get_current_solar(void)` | Solar-array current (MCP3208 CH3). |
+| `float get_current_bus(void)` | Bus current (MCU ADC GP28). |
 
 ## Example (full board)
 
@@ -71,5 +82,24 @@ void loop() {
   float i_sol = eps.get_current_solar();
   float i_chg = eps.get_current_charge();
   // ... log via CDH ...
+}
+```
+
+## Example (Lite board)
+
+```cpp
+#include <HeptaSatLite.h>
+HeptaLiteEps eps;
+
+void setup() {
+  eps.init();
+  eps.switch_3V3_on();
+}
+
+void loop() {
+  float bus = eps.get_bus_voltage();
+  float i_sol = eps.get_current_solar();
+  float i_bus = eps.get_current_bus();
+  // no get_current_charge() on Lite
 }
 ```

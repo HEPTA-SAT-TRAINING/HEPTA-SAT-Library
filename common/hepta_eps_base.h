@@ -4,9 +4,9 @@
  *
  * Board-specific classes (HeptaEps, HeptaLiteEps) inherit from this base and
  * supply the divider ADC pin plus their own divider / current-sense gains via
- * the protected constructor (the two boards mount different hardware), then
- * add their own rail / current readings (MCP3208 on HEPTA-SAT, raw ADC on
- * Lite). Sketches do not include this header directly.
+ * the protected constructor, then add rail / current readings (MCP3208 on
+ * both boards; Lite has no charge-current channel). Sketches do not include
+ * this header directly.
  */
 
 #ifndef HEPTA_EPS_BASE_H

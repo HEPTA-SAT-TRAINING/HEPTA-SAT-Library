@@ -1,6 +1,8 @@
 /**
  * @file hepta_lite_cdh.h
  * @brief HEPTA-SAT Lite CDH: SD pins and Serial wired for the Lite board.
+ *
+ * GP0 is USER on Ver4.2.0 (not CAMERA_CS). Do not drive it from CDH.
  */
 
 #ifndef HEPTA_LITE_CDH_H

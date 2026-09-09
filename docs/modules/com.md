@@ -6,6 +6,9 @@ Classes:
 - `HeptaLiteCom` for HEPTA-SAT Lite
 
 Both derive from `HeptaComBase` and use SoftwareSerial RX pin 15 / TX pin 14.
+On **both** boards, GP1 is **XBEE_RESET** (active low). The board classes
+deassert RESET in `begin()` and expose `xbee_reset()`.
+
 `HeptaComBase` provides the education-facing API and delegates device-specific
 communication and AT commands to the [`Xbee` driver](../drivers/xbee.md).
 The initial implementation targets XBee AT / Transparent mode.
@@ -14,7 +17,9 @@ The initial implementation targets XBee AT / Transparent mode.
 
 | Method | Description |
 |--------|-------------|
-| `bool begin()` | Start the XBee SoftwareSerial port at the fixed 38400 baud rate. |
+| `bool begin()` | Deassert XBEE_RESET (GP1), then start the XBee SoftwareSerial port at 38400 baud. |
+| `void xbee_reset()` | Hardware-reset the XBee (active-low GP1). UART is ready ~1 s after RESET. |
+| `bool set_uart_baud(uint32_t baud)` | Reopen the XBee UART at `baud` (`end()` then `begin()`). |
 | `size_t print(...)` / `println(...)` / `printf(...)` | Formatted downlink output (same signatures as CDH). |
 | `size_t write(uint8_t)` / `write(const uint8_t*, size_t)` | Raw byte output (same signatures as CDH). |
 | `bool is_cmd_received()` | Return whether a command byte is waiting on the XBee link. |
@@ -30,6 +35,9 @@ The initial implementation targets XBee AT / Transparent mode.
 | `bool set_transparent_mode(bool save=false)` | Set `AP=0`. |
 | `bool set_api_mode(bool save=false)` | Set `AP=1`; API frames are not implemented. |
 | `const char* last_error()` | Return the most recent error message. |
+
+`begin()` and `xbee_reset()` live on `HeptaCom` / `HeptaLiteCom`. The remaining
+methods live on `HeptaComBase`.
 
 The legacy `get_char()`, `send_char()`, `get_text()`, and `send_text()` methods
 remain available for existing sketches.

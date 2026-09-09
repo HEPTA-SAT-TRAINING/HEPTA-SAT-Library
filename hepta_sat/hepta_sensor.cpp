@@ -37,6 +37,14 @@ int HeptaSensor::gps_read_byte(void) {
   return gps.read_byte();
 }
 
+void HeptaSensor::gps_end(void) {
+  gps.end();
+}
+
+void HeptaSensor::gps_begin(void) {
+  gps.begin();
+}
+
 float HeptaSensor::get_temperature(void) {
   // resistance [Ω]
   const float R3  = 110.0f;

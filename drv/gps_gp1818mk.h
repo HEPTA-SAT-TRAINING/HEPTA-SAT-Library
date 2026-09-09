@@ -51,8 +51,10 @@ class Gps1818mk {
     Gps1818mk(pin_size_t rx_pin = 13, pin_size_t tx_pin = 2)
       : _rx_pin(rx_pin), _tx_pin(tx_pin) {}
 
-    /** @brief Initialize the SoftwareSerial port at 9600 baud. Call once in setup(). */
+    /** @brief Initialize the SoftwareSerial port at 9600 baud. Safe to call again after end(). */
     void begin(void);
+    /** @brief Release GPS PIO state machines so another SoftwareSerial can reopen. */
+    void end(void);
 
     /**
      * @brief Non-blocking read of one byte from the raw NMEA stream.
@@ -116,6 +118,7 @@ class Gps1818mk {
     pin_size_t _rx_pin;
     pin_size_t _tx_pin;
     SoftwareSerial* _serial = nullptr;
+    bool _started = false;
 
     int  read_byte_timeout(void);                            // Returns one byte, or -1 on 200 ms timeout
     bool wait_serial(void);                          // Returns false if no data within 1 second

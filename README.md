@@ -18,16 +18,16 @@ automatically.
 | **CDH**    | SD card, serial logging, command handling | `HeptaCdh` | `HeptaLiteCdh` |
 | **COM**    | XBee telemetry over SoftwareSerial         | `HeptaCom` | `HeptaLiteCom` |
 | **EPS**    | Battery / rail voltages, current sense     | `HeptaEps` | `HeptaLiteEps` |
-| **Sensor** | BNO055 IMU, temperature, GPS, camera¹      | `HeptaSensor` | `HeptaLiteSensor` |
+| **Sensor** | BNO055 IMU; Full: analog temp / GPS / camera; Lite: BME280 T/H/P | `HeptaSensor` | `HeptaLiteSensor` |
 
-¹ GPS (GP-1818MK) and camera (Arducam Mini 2MP Plus) are only wired on the full
-  `HeptaSensor`.
-
+GPS (GP-1818MK) and camera (Arducam Mini 2MP Plus) are only wired on the full
+`HeptaSensor`. Lite uses an onboard BME280 (same Wire bus as the IMU) for
+temperature, humidity, and pressure.
 ## XBee communication
 
 HeptaCom v0.1 is a high-level wrapper for an XBee operating in AT /
 Transparent mode. Both `HeptaCom` and `HeptaLiteCom` use SoftwareSerial with
-RX pin 15 and TX pin 14.
+RX pin 15 and TX pin 14, and both drive XBEE_RESET on GP1.
 
 Before using the library, configure the XBee with settings appropriate for the
 kit:
@@ -37,8 +37,8 @@ kit:
 - `DH` / `DL` for the peer XBee
 - `BD=5` (38400 baud)
 
-The library always opens the XBee UART at 38400 baud. The baud rate is not
-specified by sketches.
+The library opens the XBee UART at 38400 baud by default. Lab99 can reopen
+it at 9600 via `set_uart_baud()` if factory-default AT fails.
 
 `send()` transmits exactly the bytes supplied. It does not append a newline:
 

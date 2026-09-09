@@ -10,8 +10,6 @@
 
 #include "bme280_bosch.h"
 
-#include <Wire.h>
-
 enum Bme280Reg : uint8_t {
   BME280_REG_CHIP_ID = 0xD0,
   BME280_REG_RESET = 0xE0,
@@ -33,10 +31,15 @@ static int16_t sign_extend_humidity_cal(int16_t value) {
   return value;
 }
 
-bool Bme280::begin(uint8_t addr, uint8_t sda_pin, uint8_t scl_pin) {
-  Wire1.setSDA(sda_pin);
-  Wire1.setSCL(scl_pin);
-  Wire1.begin();
+bool Bme280::begin(uint8_t addr, uint8_t sda_pin, uint8_t scl_pin, TwoWire *wire) {
+  if (wire == NULL) {
+    return false;
+  }
+
+  _wire = wire;
+  _wire->setSDA(sda_pin);
+  _wire->setSCL(scl_pin);
+  _wire->begin();
 
   _initialized = false;
   _i2c_addr = 0;
@@ -232,10 +235,13 @@ uint32_t Bme280::_compensate_humidity(int32_t adc_H) {
 }
 
 bool Bme280::_write_reg(uint8_t reg, uint8_t value) {
-  Wire1.beginTransmission(_i2c_addr);
-  Wire1.write(reg);
-  Wire1.write(value);
-  return Wire1.endTransmission() == 0;
+  if (_wire == NULL) {
+    return false;
+  }
+  _wire->beginTransmission(_i2c_addr);
+  _wire->write(reg);
+  _wire->write(value);
+  return _wire->endTransmission() == 0;
 }
 
 bool Bme280::_read_reg(uint8_t reg, uint8_t *value) {
@@ -243,23 +249,23 @@ bool Bme280::_read_reg(uint8_t reg, uint8_t *value) {
 }
 
 bool Bme280::_read_bytes(uint8_t reg, uint8_t *data, size_t length) {
-  if (data == NULL || length == 0) {
+  if (_wire == NULL || data == NULL || length == 0) {
     return false;
   }
 
-  Wire1.beginTransmission(_i2c_addr);
-  Wire1.write(reg);
-  if (Wire1.endTransmission(false) != 0) {
+  _wire->beginTransmission(_i2c_addr);
+  _wire->write(reg);
+  if (_wire->endTransmission(false) != 0) {
     return false;
   }
 
-  size_t received = Wire1.requestFrom(_i2c_addr, static_cast<uint8_t>(length));
+  size_t received = _wire->requestFrom(_i2c_addr, static_cast<uint8_t>(length));
   if (received != length) {
     return false;
   }
 
   for (size_t i = 0; i < length; i++) {
-    data[i] = Wire1.read();
+    data[i] = _wire->read();
   }
   return true;
 }

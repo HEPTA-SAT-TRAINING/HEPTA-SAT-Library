@@ -5,7 +5,6 @@
 
 namespace {
 
-constexpr uint32_t XBEE_BAUD_RATE = 38400;
 constexpr uint32_t XBEE_GUARD_TIME_MS = 1100;
 constexpr uint32_t XBEE_COMMAND_TIMEOUT_MS = 1000;
 constexpr int XBEE_ERROR = -1;
@@ -14,8 +13,16 @@ constexpr int XBEE_BUFFER_OVERFLOW = -2;
 }  // namespace
 
 
-bool Xbee::begin(void) {
-  serial_.begin(XBEE_BAUD_RATE);
+bool Xbee::begin(uint32_t baud) {
+  // Arduino-Pico SoftwareSerial claims PIO state machines on begin().
+  // Calling begin() again without end() leaks SMs and can hang USB CDC
+  // (seen after camera SPI, when Lab99 retries AT with com.begin()).
+  if (started_) {
+    serial_.end();
+    delay(1);
+  }
+  serial_.begin(baud);
+  started_ = true;
   last_error_ = nullptr;
   return true;
 }
@@ -219,6 +226,7 @@ bool Xbee::send_at_command(const char* command,
   }
 
   response[0] = '\0';
+  clear_input();
   if (!send(command)) {
     return false;
   }

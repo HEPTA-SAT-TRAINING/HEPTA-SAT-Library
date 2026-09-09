@@ -13,7 +13,9 @@
 
 bool HeptaSensorBase::begin(void) {
   analogReadResolution(12);
-  pinMode(_temp_pin, INPUT);
+  if (_has_temp_pin) {
+    pinMode(_temp_pin, INPUT);
+  }
   return bno055.begin();
 }
 

@@ -3,8 +3,9 @@
 Source: [drv/adc_mcp3208.h](../../drv/adc_mcp3208.h) ·
 [drv/adc_mcp3208.cpp](../../drv/adc_mcp3208.cpp)
 
-Driver for the **MCP3208**, an 8-channel 12-bit SPI ADC. Used by the full-board
-[EPS](../modules/eps.md) to read rail voltages and current sense.
+Driver for the **MCP3208**, an 8-channel 12-bit SPI ADC. Used by
+[EPS](../modules/eps.md) on both boards to read rail voltages and current
+sense (Lite has no charge-current channel).
 
 ## API
 

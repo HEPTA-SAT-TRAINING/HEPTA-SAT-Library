@@ -13,8 +13,8 @@ behavior:
 - optional `ATWR` nonvolatile storage
 
 The driver does not depend on HEPTA-SAT board classes. RX/TX pins are supplied
-to its constructor by `HeptaComBase`. The UART baud rate is fixed at 38400 and
-must match the XBee `BD=5` setting configured in XCTU.
+to its constructor by `HeptaComBase`. The UART baud rate defaults to 38400
+(`BD=5`). `begin(baud)` can reopen the port (Lab99 tries 9600 if 38400 AT fails).
 
 The initial version supports AT / Transparent mode communication. It can change
 the radio to API mode, but API frame construction and parsing are not yet

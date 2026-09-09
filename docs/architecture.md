@@ -22,7 +22,7 @@ board-specific pin assignments and conversion formulas separate.
                                        │
                                        ▼
   driver layer                       drv/
-             AdcMcp3208 · CameraArducam2mp · Gps1818mk · Bno055 · Xbee · UnitRoller
+             AdcMcp3208 · CameraArducam2mp · Gps1818mk · Bno055 · Bme280 · Xbee · UnitRoller
 ```
 
 ## Layer responsibilities
@@ -35,9 +35,9 @@ is not supported.
 
 ### Board layer (`hepta_sat/`, `hepta_sat_lite/`)
 Thin classes whose only job is to **fix the hardware configuration** of the
-board: SD/SPI pins, ADC pins, the temperature pin, XBee RX/TX, etc. They pass
-those values to the base-class constructor and, where the boards differ, add a
-board-specific method (e.g. each board's own `get_temperature()` conversion).
+board: SD/SPI pins, ADC pins, XBee RX/TX/RESET, etc. They pass those values to
+the base-class constructor and, where the boards differ, add board-specific
+methods (Full analog temperature / GPS / camera; Lite BME280 T/H/P).
 
 ### Base layer (`common/`)
 Where the real work lives. `HeptaCdhBase`, `HeptaComBase`, `HeptaEpsBase`, and
@@ -53,8 +53,8 @@ initialization and retry policy remains shared.
 ### Driver layer (`drv/`)
 Self-contained drivers for individual chips/modules. They know nothing about
 HEPTA-SAT; they just talk to hardware (SPI/I2C/UART). Base and board classes
-compose them (e.g. `HeptaSensor` owns a `CameraArducam2mp` and a `Gps1818mk`, while
-`HeptaComBase` owns an `Xbee`).
+compose them (e.g. `HeptaSensor` owns a `CameraArducam2mp` and a `Gps1818mk`,
+`HeptaLiteSensor` owns a `Bme280` on Wire, and `HeptaComBase` owns an `Xbee`).
 
 ## Why this shape
 
@@ -67,5 +67,6 @@ compose them (e.g. `HeptaSensor` owns a `CameraArducam2mp` and a `Gps1818mk`, wh
 
 Both boards expose the shared education-facing API in `HeptaComBase`.
 `HeptaCom` and `HeptaLiteCom` fix the board wiring to SoftwareSerial RX pin 15
-and TX pin 14. `HeptaComBase` delegates UART communication, XBee command mode,
-and AT commands to the `Xbee` driver in `drv/`.
+and TX pin 14, and both drive **XBEE_RESET** on GP1. `HeptaComBase` delegates
+UART communication, XBee command mode, and AT commands to the `Xbee` driver in
+`drv/`.

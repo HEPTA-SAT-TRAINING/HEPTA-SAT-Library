@@ -3,9 +3,10 @@
 Classes: `HeptaSensor` (full) / `HeptaLiteSensor` (Lite), both deriving from
 `HeptaSensorBase` ([common/hepta_sensor_base.h](../../common/hepta_sensor_base.h)).
 
-The base provides the **BNO055 9-axis IMU** and an analog **temperature** reading.
-The full-board `HeptaSensor` additionally exposes **GPS** (GP-1818MK) and a
-**camera** (Arducam Mini 2MP Plus). The Lite board has IMU + temperature only.
+The base provides the **BNO055 9-axis IMU**. The full-board `HeptaSensor`
+adds analog **temperature** (Pt100), **GPS** (GP-1818MK), and a **camera**
+(Arducam Mini 2MP Plus). Lite has IMU plus an onboard **BME280** for
+temperature, humidity, and pressure &mdash; no GPS or camera.
 
 ## Shared API (`HeptaSensorBase`)
 
@@ -17,15 +18,13 @@ The full-board `HeptaSensor` additionally exposes **GPS** (GP-1818MK) and a
 | `bool get_magnetometer(float* mx, float* my, float* mz)` | Magnetic field in µT. Reinitializes after an I2C failure. |
 | `void print_acceleration(void)` / `print_gyro(void)` / `print_magnetometer(void)` | Print to Serial. |
 
-Each board adds its own `get_temperature(void)` returning degrees Celsius, using
-its board-specific conversion formula (temperature ADC: pin 27 full, pin 13 Lite).
-
 See [drivers/imu-bno055.md](../drivers/imu-bno055.md) for IMU details.
 
 ## Full board &mdash; `HeptaSensor`
 
-Adds GPS and camera on top of the shared API. The GPS methods are thin wrappers
-over the [GP-1818MK driver](../drivers/gps-gp1818mk.md).
+Adds GPS and camera on top of the shared API. Temperature is a Pt100 bridge
+on ADC pin 27 (`get_temperature()`). The GPS methods are thin wrappers over
+the [GP-1818MK driver](../drivers/gps-gp1818mk.md).
 
 ### GPS
 
@@ -58,8 +57,24 @@ need an operator power-cycle. See
 
 ## Lite board &mdash; `HeptaLiteSensor`
 
-Shared IMU/temperature API only, with the Lite temperature formula. No GPS, no
-camera.
+Onboard **BME280** on the same `Wire` bus as the BNO055 (GP4/GP5, address
+`0x76`, SDO=GND). No GPS, no camera, no analog temperature formula.
+
+`begin()` initializes the IMU first, then the BME280. The return value is
+IMU success (same as Full). If the BME280 is missing, environmental getters
+return `NAN`.
+
+`get_temperature()` / `get_humidity()` / `get_pressure()` share one
+`Bme280::read()` and cache the latest sample. Failure returns `NAN`.
+
+| Method | Description |
+|--------|-------------|
+| `bool begin(void)` | IMU then BME280; returns IMU success. |
+| `float get_temperature(void)` | Temperature in °C from the BME280. |
+| `float get_humidity(void)` | Relative humidity in %. |
+| `float get_pressure(void)` | Pressure in hPa. |
+
+See [drivers/bme280-bosch.md](../drivers/bme280-bosch.md).
 
 ## Example (full board)
 
@@ -82,6 +97,27 @@ void loop() {
 
   sensor.camera_snapshot("img.jpg");  // VGA by default
   sensor.camera_snapshot("small.jpg", ARDUCAM_JPEG_QVGA);
+  delay(1000);
+}
+```
+
+## Example (Lite board)
+
+```cpp
+#include <HeptaSatLite.h>
+HeptaLiteSensor sensor;
+
+void setup() {
+  sensor.begin();
+}
+
+void loop() {
+  float ax, ay, az;
+  sensor.get_acceleration(&ax, &ay, &az);
+
+  float t = sensor.get_temperature();
+  float h = sensor.get_humidity();
+  float p = sensor.get_pressure();
   delay(1000);
 }
 ```
