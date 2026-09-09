@@ -42,7 +42,7 @@ HeptaSensor sensor;
 void setup() {
   cdh.begin();        // Serial + SD card
   eps.init();         // power subsystem
-  sensor.begin();     // BNO055 IMU (+ GPS/camera on the full board)
+  sensor.begin();     // BNO055 IMU (+ GPS/camera on Full; BME280 T/H/P on Lite)
 
   cdh.println("HEPTA-Sat booted");
 }

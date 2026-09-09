@@ -1,10 +1,10 @@
 /**
  * @file hepta_sensor_base.h
- * @brief Shared sensor implementation (BNO055 IMU + analog temperature ADC).
+ * @brief Shared sensor implementation (BNO055 IMU; optional analog temperature ADC).
  *
- * Board-specific classes (HeptaSensor, HeptaLiteSensor) inherit from this base,
- * supply the temperature ADC pin via the protected constructor, and add their
- * own get_temperature() with the board's conversion formula.
+ * Board-specific classes (HeptaSensor, HeptaLiteSensor) inherit from this base.
+ * Full-board HeptaSensor supplies the temperature ADC pin via the protected
+ * constructor. Lite uses the pin-less constructor (onboard BME280 instead).
  * Sketches do not include this header directly.
  */
 
@@ -27,11 +27,13 @@ class HeptaSensorBase {
     void print_magnetometer(void);
 
   protected:
-    HeptaSensorBase(uint8_t temp_pin) : _temp_pin(temp_pin) {}
+    HeptaSensorBase() : _temp_pin(0), _has_temp_pin(false) {}
+    HeptaSensorBase(uint8_t temp_pin) : _temp_pin(temp_pin), _has_temp_pin(true) {}
     float read_temp_voltage(void);
 
     Bno055 bno055;
     const uint8_t _temp_pin;
+    const bool _has_temp_pin;
 };
 
 

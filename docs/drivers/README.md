@@ -19,9 +19,10 @@ base/board classes compose them.
 
 The hardware drivers are used by HEPTA-Sat subsystems:
 
-- `AdcMcp3208` &rarr; full-board [EPS](../modules/eps.md)
+- `AdcMcp3208` &rarr; [EPS](../modules/eps.md) on both boards
 - `CameraArducam2mp`, `Gps1818mk` &rarr; full-board [Sensor](../modules/sensor.md)
 - `Bno055` &rarr; [Sensor](../modules/sensor.md) on both boards
+- `Bme280` &rarr; Lite [Sensor](../modules/sensor.md) (onboard; Full payload optional)
 - `Xbee` &rarr; [COM](../modules/com.md) on both boards
 
 `UnitRollerI2C` is a vendored third-party driver (see its page).

@@ -12,16 +12,19 @@
 #define BME280_BOSCH_H
 
 #include <Arduino.h>
+#include <Wire.h>
 
 class Bme280 {
   public:
     /**
      * @brief Initialize the BME280 on I2C.
      * @param addr I2C address (0x76 or 0x77). Pass 0 to try both.
-     * @param sda_pin SDA pin on Wire1 (default GP6 on HEPTA-SAT payload bus)
-     * @param scl_pin SCL pin on Wire1 (default GP7 on HEPTA-SAT payload bus)
+     * @param sda_pin SDA pin (default GP6 on the HEPTA-SAT payload bus)
+     * @param scl_pin SCL pin (default GP7 on the HEPTA-SAT payload bus)
+     * @param wire I2C bus (default `&Wire1` for Full payload; Lite onboard uses `&Wire`)
      */
-    bool begin(uint8_t addr = 0, uint8_t sda_pin = 6, uint8_t scl_pin = 7);
+    bool begin(uint8_t addr = 0, uint8_t sda_pin = 6, uint8_t scl_pin = 7,
+               TwoWire *wire = &Wire1);
 
     /**
      * @brief Read compensated temperature, humidity, and pressure.
@@ -44,6 +47,7 @@ class Bme280 {
     bool _read_reg(uint8_t reg, uint8_t *value);
     bool _read_bytes(uint8_t reg, uint8_t *data, size_t length);
 
+    TwoWire *_wire = &Wire1;
     uint8_t _i2c_addr = 0;
     bool _initialized = false;
     int32_t _t_fine = 0;
