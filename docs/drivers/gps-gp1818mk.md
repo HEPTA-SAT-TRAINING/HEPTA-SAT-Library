@@ -178,3 +178,9 @@ clock tolerance, long-run loss, IRQ coexistence, or worst-case parsing latency.
 On RP2040 and RP2350 check continuous back-to-back reception, buffer wrap/overrun,
 end/begin cycles with XBee active, bad framing, SD/camera traffic, and execution
 time with a full buffer before relying on the API in a sampling/control deadline.
+
+Indoor RP2350 GPS-only reception, no-fix state, 100 Hz polling, backlog, overrun
+and restart measurements are now recorded in
+[the hardware validation report](../../tests/gps/HARDWARE_VALIDATION.md).
+IMU and XBee modules were absent; outdoor fix handling, peripheral traffic and
+hard worst-case timing remain outside that bounded test.

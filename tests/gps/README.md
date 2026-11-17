@@ -50,3 +50,9 @@ Lab files and submodule pointers unchanged.
 
 These checks do not measure target parsing time or establish DMA reception on
 hardware. Required board checks are listed in the GPS driver documentation.
+
+## Subsequent device checks
+
+Indoor GPS-only RP2350 measurements and their remaining limits are recorded in
+[HARDWARE_VALIDATION.md](HARDWARE_VALIDATION.md). The diagnostic sketch and USB
+capture instructions are in [hardware/README.md](hardware/README.md).

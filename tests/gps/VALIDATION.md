@@ -1,7 +1,9 @@
 # GPS DMA / latest snapshot validation
 
 Date: 2026-11-17 (Asia/Tokyo). Branch: `feat/gps-dma-latest`.
-Base: `cc0923a` (`develop`). No board was attached; no upload was performed.
+Base: `cc0923a` (`develop`). This records the offline phase: no board was attached and no upload was performed.
+
+Subsequent indoor RP2350 device checks are recorded in [HARDWARE_VALIDATION.md](HARDWARE_VALIDATION.md).
 
 ## Implementation and compatibility
 
@@ -56,7 +58,7 @@ Static RAM figures exclude heap allocation: the aligned RX buffer allocation is 
 | Lab99_Check_Kit | `5be1657066b03db1a2db4f759a5f343d0eb4f8192f70ab93142fca05e7dd9689` |
 | System-Check | `ad7f141b8d12954d648352a6ee47072264e56b9618a1800962c0f8d26b37d092` |
 
-## Not verified without hardware
+## Not covered by the offline phase
 
 - Electrical UART reception, DMA/PIO execution on silicon and clock tolerance.
 - Long-run reception, real buffer/IRQ timing and recovery under heavy load.
