@@ -58,7 +58,7 @@ Include [hepta_obc_pins.h](../../hepta_sat/hepta_obc_pins.h) via `HeptaSat.h` fo
 |--------|----:|
 | Temperature ADC | 27 |
 | BNO055 IMU | I2C (addr 0x28) |
-| GPS GP-1818MK | SoftwareSerial RX 13 / TX 2 |
+| GPS GP-1818MK | PIO + DMA RX 13 / TX 2 (idle HIGH) |
 | Camera (Arducam Mini 2MP Plus) | CS = GP0 (shared SPI); OV2640 on I2C |
 
 > **V4.1.1:** GP0 is `CAMERA_CS` for the Arducam Mini 2MP Plus; GP1 is

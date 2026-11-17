@@ -1,7 +1,7 @@
 /**
  * @file gps_gp1818mk.h
  * @author Masaki Naito
- * @brief Driver for GP-1818MK GPS module (NMEA 0183 over SoftwareSerial)
+ * @brief Driver for GP-1818MK GPS module (NMEA 0183 over PIO + DMA)
  * @version 0.3
  * @date 2025-02-26
  *
@@ -12,33 +12,8 @@
 #define GPS_GP1818MK_H
 
 #include <Arduino.h>
-#include <SoftwareSerial.h>
-
-/**
- * @brief Parsed contents of a GPGGA sentence (position + fix quality).
- *
- * lat/lon are in decimal degrees (negative = South / West) and alt is in
- * meters above mean sea level — i.e. the same convention as get_position().
- */
-struct GpggaData {
-  float   utc_time;     ///< UTC time of fix, hhmmss.sss
-  float   lat;          ///< Latitude  in decimal degrees; negative = South
-  float   lon;          ///< Longitude in decimal degrees; negative = West
-  float   alt;          ///< Altitude above mean sea level in meters
-  uint8_t fix_quality;  ///< 0 = no fix, 1 = GPS, 2 = DGPS
-  uint8_t sat_num;      ///< Number of satellites in use
-  float   hdop;         ///< Horizontal dilution of precision
-};
-
-/**
- * @brief Parsed contents of a GPRMC sentence (velocity + heading).
- */
-struct GprmcData {
-  float utc_time;   ///< UTC time of fix, hhmmss.sss
-  float velocity;   ///< Ground speed in m/s
-  float heading;    ///< True course in degrees (0–360)
-  char  date[7];    ///< UTC date, ddmmyy (null-terminated)
-};
+#include "gps_dma_rx.h"
+#include "../common/gps_nmea.h"
 
 class Gps1818mk {
   public:
@@ -51,9 +26,9 @@ class Gps1818mk {
     Gps1818mk(pin_size_t rx_pin = 13, pin_size_t tx_pin = 2)
       : _rx_pin(rx_pin), _tx_pin(tx_pin) {}
 
-    /** @brief Initialize the SoftwareSerial port at 9600 baud. Safe to call again after end(). */
+    /** @brief Initialize the PIO + DMA receiver at 9600 baud. Safe to call again after end(). */
     void begin(void);
-    /** @brief Release GPS PIO state machines so another SoftwareSerial can reopen. */
+    /** @brief Release GPS DMA channels and PIO state machines so another SoftwareSerial can reopen. */
     void end(void);
 
     /**
@@ -114,18 +89,25 @@ class Gps1818mk {
     /** @brief Return true if at least one byte is waiting in the receive buffer. */
     bool is_data_available(void);
 
+    /**
+     * Parse at most the 2048 bytes already received at entry, then copy the
+     * cached GGA/RMC state. Never waits for reception; parsing cost varies.
+     * true = a cached GGA or RMC exists, NOT necessarily a valid/fresh fix.
+     * Non-null out is always written, including on false. nullptr is rejected.
+     * Call all GPS methods on the core that called begin(); not reentrant.
+     */
+    bool get_latest(GpsSnapshot* out);
+
   private:
     pin_size_t _rx_pin;
     pin_size_t _tx_pin;
-    SoftwareSerial* _serial = nullptr;
-    bool _started = false;
+    GpsDmaRx _receiver;
+    GpsNmeaParser _parser;
+    uint32_t _seen_overruns = 0;
+    uint32_t _seen_errors = 0;
 
-    int  read_byte_timeout(void);                            // Returns one byte, or -1 on 200 ms timeout
-    bool wait_serial(void);                          // Returns false if no data within 1 second
-    bool get_header(const char* header);             // Sliding-window search for 6-char NMEA header
-    bool read_sentence(char* buf, uint16_t len);     // Skip comma, read until CRLF into buf
-    bool parse_gpgga(GpggaData* out);   // Parse a GPGGA sentence body into out
-    bool parse_gprmc(GprmcData* out);   // Parse a GPRMC sentence body into out
+    void sync_receiver(void);
+    bool wait_sentence(GpsNmeaParser::Event target, bool initial_wait = true);
 };
 
 #endif /* GPS_GP1818MK_H */

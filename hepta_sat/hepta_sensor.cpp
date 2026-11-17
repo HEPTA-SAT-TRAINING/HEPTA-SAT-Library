@@ -2,7 +2,7 @@
 
 bool HeptaSensor::begin(void) {
   // Run the shared sensor init (ADC resolution, temp pin, BNO055) first,
-  // then bring up the GPS SoftwareSerial port.
+  // then bring up the GPS PIO + DMA receiver.
   bool ok = HeptaSensorBase::begin();
   gps.begin();
   return ok;
@@ -35,6 +35,10 @@ bool HeptaSensor::gps_is_data_available(void) {
 
 int HeptaSensor::gps_read_byte(void) {
   return gps.read_byte();
+}
+
+bool HeptaSensor::gps_get_latest(GpsSnapshot* out) {
+  return gps.get_latest(out);
 }
 
 void HeptaSensor::gps_end(void) {
