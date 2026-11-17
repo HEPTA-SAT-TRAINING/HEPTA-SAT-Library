@@ -1,0 +1,18 @@
+; RX-only 9600-baud 8N1, eight PIO clocks per UART bit.
+; Data is right-shifted into bits 31:24. A bad stop bit emits a NUL marker.
+.program hepta_gps_uart_rx
+.wrap_target
+start:
+    wait 0 pin 0
+    set x, 7 [10]
+data:
+    in pins, 1
+    jmp x-- data [6]
+    jmp pin good_stop
+    mov isr, null
+    push block
+    wait 1 pin 0
+    jmp start
+good_stop:
+    push block
+.wrap

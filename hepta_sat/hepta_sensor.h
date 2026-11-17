@@ -31,6 +31,8 @@ class HeptaSensor : public HeptaSensorBase {
     bool gps_get_gprmc(GprmcData* out);
     bool gps_is_data_available(void);
     int  gps_read_byte(void);
+    /** Parse received bytes and copy the latest GGA/RMC; never wait for RX. */
+    bool gps_get_latest(GpsSnapshot* out);
     void gps_end(void);
     void gps_begin(void);
 

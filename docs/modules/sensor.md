@@ -37,10 +37,21 @@ the [GP-1818MK driver](../drivers/gps-gp1818mk.md).
 | `bool gps_get_gprmc(GprmcData* out)` | Full GPRMC (adds UTC time, date). |
 | `bool gps_is_data_available(void)` | True if a raw NMEA byte is waiting. |
 | `int  gps_read_byte(void)` | Non-blocking raw NMEA byte (`-1` if none). |
+| `void gps_begin(void)` / `void gps_end(void)` | Start/restart or stop GPS reception and reset the cache. |
+| `bool gps_get_latest(GpsSnapshot* out)` | Parse only bytes already received and copy the cached GGA/RMC; no reception wait. |
 
 Latitude/longitude are decimal degrees (negative = South/West); altitude is
-meters above mean sea level. `GpggaData` / `GprmcData` are defined in
-[drv/gps_gp1818mk.h](../../drv/gps_gp1818mk.h).
+meters above mean sea level. `GpggaData` / `GprmcData` remain available through
+[drv/gps_gp1818mk.h](../../drv/gps_gp1818mk.h); their definitions and the new
+`GpsSnapshot` are in [common/gps_snapshot.h](../../common/gps_snapshot.h).
+
+`gps_get_latest()` returns whether any accepted GGA/RMC is cached, not whether
+there is a valid or fresh fix. Inspect per-type validity, UTC and sequence
+numbers. It always writes a non-null output, even before the first sentence.
+No `update()` call, second core or background parser is required. Call regularly
+within the 2048-byte receive capacity and from the core that called begin().
+Raw reads and parsed reads consume the same stream. See the driver's
+[snapshot contract](../drivers/gps-gp1818mk.md#on-demand-latest-snapshot).
 
 ### Camera
 
