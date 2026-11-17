@@ -17,6 +17,7 @@ struct Channel {
 Channel channels[NUM_DMA_CHANNELS];
 bool interrupts = true, irq_enabled = false, pio_enabled = false;
 unsigned sms = 0;
+unsigned gpio_inits = 0;
 uint32_t clock_ms = 0;
 std::vector<irq_handler_t> handlers;
 void dispatch() {
@@ -58,7 +59,7 @@ void inject(uint8_t byte) {
 void stall() { pio.fdebug.bits |= 1u << PIO_FDEBUG_RXSTALL_LSB; }
 void bus_error() {
   for (uint ch = 0; ch < NUM_DMA_CHANNELS; ++ch) if (channels[ch].active) {
-    registers.ch[ch].ctrl_trig |= DMA_CH0_CTRL_TRIG_AHB_ERROR_BITS;
+    registers.ch[ch].ctrl_trig |= DMA_CH0_CTRL_TRIG_AHB_ERROR_BITS | DMA_CH0_CTRL_TRIG_READ_ERROR_BITS;
     channels[ch].active = false;
     registers.ints1.bits |= 1u << ch;
     dispatch();
@@ -68,6 +69,7 @@ void bus_error() {
 unsigned claimed_dma() { unsigned n = 0; for (auto& c : channels) n += c.claimed; return n; }
 unsigned claimed_sm() { return sms; }
 unsigned shared_handlers() { return unsigned(handlers.size()); }
+unsigned gpio_init_count() { return gpio_inits; }
 void unrelated_irq(uint32_t bits) { registers.ints1.bits |= bits; }
 }
 
@@ -84,7 +86,7 @@ uint32_t clock_get_hz(uint) { return 150000000; }
 int dma_claim_unused_channel(bool) {
   for (int ch = 0; ch < sdk_model::dma_limit; ++ch) if (!channels[ch].claimed) {
     channels[ch] = Channel{}; channels[ch].claimed = true;
-    registers.ch[ch] = DmaChannel{};
+    // SDK claiming only changes software ownership; hardware status persists.
     return ch;
   }
   return -1;
@@ -106,7 +108,11 @@ void dma_channel_configure(uint ch, const dma_channel_config* config, volatile v
   c.config = *config; c.write = static_cast<volatile uint8_t*>(write);
   c.address = reinterpret_cast<uintptr_t>(write); c.count = count;
   assert(!(c.address & ((uintptr_t(1) << config->ring_bits) - 1)));
-  registers.ch[ch].ctrl_trig = DMA_CH0_CTRL_TRIG_EN_BITS;
+  const uint32_t errors = DMA_CH0_CTRL_TRIG_READ_ERROR_BITS | DMA_CH0_CTRL_TRIG_WRITE_ERROR_BITS;
+  uint32_t sticky = registers.ch[ch].ctrl_trig & errors;
+  sticky &= ~config->ctrl; // READ_ERROR/WRITE_ERROR are write-one-to-clear.
+  registers.ch[ch].ctrl_trig = (config->ctrl & ~errors) | sticky |
+      (sticky ? DMA_CH0_CTRL_TRIG_AHB_ERROR_BITS : 0);
   registers.ch[ch].transfer_count = count;
   if (trigger) start(ch);
 }
@@ -138,7 +144,7 @@ uint pio_get_dreq(PIO, uint sm, bool) { return sm; }
 void pio_gpio_init(PIO, uint) {}
 void gpio_set_input_enabled(uint, bool) {}
 void gpio_pull_up(uint) {}
-void gpio_init(uint) {}
+void gpio_init(uint) { ++gpio_inits; }
 void gpio_put(uint, bool) {}
 void gpio_set_dir(uint, bool) {}
 void gpio_disable_pulls(uint) {}

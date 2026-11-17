@@ -17,13 +17,15 @@ Base: `cc0923a` (`develop`). No board was attached; no upload was performed.
 
 Windows x86-64, Python 3.12, Zig 0.13.0 (`zig c++`, C++17, `-Wall -Wextra -Werror -O1 -g -UNDEBUG`).
 
-- PASS: 151 parser/public-driver checks against fake RX and time.
-- PASS: 43,207 DMA transport/integration checks against an SDK register model. Most checks verify byte position/order over repeated laps.
+- PASS: 152 parser/public-driver checks against fake RX and time.
+- PASS: 43,211 DMA transport/integration assertions against an SDK register model. Most assertions verify byte position/order over repeated laps.
 - PASS: PIO instruction model, all 256 byte values back-to-back at three modelled baud ratios, bad-stop and BREAK recovery.
 - PASS: existing signatures/struct definitions checked against the base revision.
 - PASS: firmware source copies match final production code apart from comments/whitespace.
 
 The DMA model links the production transport, parser and public driver. It checks ring wrap, overwritten data, coalesced interrupts, fixed read endpoints, unrelated IRQ preservation, framing/stall/bus errors, failed allocation and repeated release.
+
+Review regressions were reproduced before fixing: failed PIO/DMA/IRQ setup must not reset GPIOs it never configured; negative coordinate values must be rejected even if float conversion underflows to negative zero; DMA bus-error flags must be explicitly cleared on reuse (claiming does not reset hardware registers). Added assertions cover all three cases.
 
 Reproduce host checks with `python tests/gps/run.py` and `python tests/gps/test_pio.py`; see README.md for compiler selection.
 
@@ -33,13 +35,13 @@ Arduino CLI 1.0.4, Arduino-Pico 6.0.0. Isolated copies combine unchanged sketche
 
 | Case | Board | Result | Flash bytes | Static RAM bytes |
 |---|---|---|---:|---:|
-| lab4-05 | `rp2040:rp2040:rpipico2` | PASS | 104472 | 12936 |
-| lab4-06 | `rp2040:rp2040:rpipico2` | PASS | 107136 | 13080 |
-| system-check | `rp2040:rp2040:rpipico2` | PASS | 119776 | 17640 |
-| check-kit-full | `rp2040:rp2040:rpipico2` | PASS | 125360 | 17636 |
+| lab4-05 | `rp2040:rp2040:rpipico2` | PASS | 104488 | 12936 |
+| lab4-06 | `rp2040:rp2040:rpipico2` | PASS | 107160 | 13080 |
+| system-check | `rp2040:rp2040:rpipico2` | PASS | 119792 | 17640 |
+| check-kit-full | `rp2040:rp2040:rpipico2` | PASS | 125376 | 17636 |
 | check-kit-lite | `rp2040:rp2040:rpipico2` | PASS | 120320 | 17320 |
-| gps-latest | `rp2040:rp2040:rpipico2` | PASS | 106856 | 13088 |
-| gps-latest-rp2040 | `rp2040:rp2040:rpipico` | PASS | 111244 | 11640 |
+| gps-latest | `rp2040:rp2040:rpipico2` | PASS | 106880 | 13088 |
+| gps-latest-rp2040 | `rp2040:rp2040:rpipico` | PASS | 111284 | 11640 |
 
 The Lite case sets `compiler.cpp.extra_flags=-DHEPTA_BOARD_LITE`. The latest-snapshot example also includes guarded host-test files under src/tests to check that they do not enter embedded builds.
 

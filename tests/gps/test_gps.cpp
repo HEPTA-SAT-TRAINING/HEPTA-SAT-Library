@@ -68,6 +68,8 @@ void parser_tests() {
   CHECK(p.snapshot().gga_sequence == seq);
   CHECK(feed(p, "$GPGGA,123519,48,N,11,E,1,08,0.9,1,M,1,M,,\r\n") == E::InvalidGga);
   CHECK(feed(p, sentence("GPGGA,123519,4860.000,N,01131.000,E,1,08,0.9,1,M,1,M,,")) == E::InvalidGga);
+  // A negative coordinate must not pass when strtof underflows to negative zero.
+  CHECK(feed(p, sentence("GPGGA,123519,-0." + std::string(48, '0') + "1,N,01131.000,E,1,08,0.9,1,M,1,M,,")) == E::InvalidGga);
   CHECK(feed(p, sentence("GPGGA,999999999999999999999999999999,N,1,2,3,1,08,0.9,1,M,1,M,,")) == E::InvalidGga);
   CHECK(feed(p, sentence("GPGGA,123519,999999999999999999,N,01131.000,E,1,08,0.9,1,M,1,M,,")) == E::InvalidGga);
   CHECK(feed(p, sentence("GPGGA,126099,4807.038,N,01131.000,E,1,08,0.9,1,M,1,M,,")) == E::InvalidGga);

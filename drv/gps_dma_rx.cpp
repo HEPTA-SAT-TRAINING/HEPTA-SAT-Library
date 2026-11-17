@@ -30,6 +30,8 @@ struct GpsDmaRx::Hardware {
   volatile uint32_t lost_epochs = 0;
   bool irq_registered = false;
   bool faulted = false;
+  bool rx_pin_configured = false;
+  bool tx_pin_configured = false;
   static Hardware* owners[NUM_DMA_CHANNELS];
   static uint users[NUM_CORES];
 
@@ -126,6 +128,7 @@ bool GpsDmaRx::begin(uint32_t rx_pin, uint32_t tx_pin) {
   uintptr_t aligned = (reinterpret_cast<uintptr_t>(hw_->allocation) + kHalf - 1) & ~uintptr_t(kHalf - 1);
   hw_->bytes = reinterpret_cast<volatile uint8_t*>(aligned);
 
+  hw_->rx_pin_configured = true;
   gpio_set_input_enabled(rx_pin, true);
   gpio_pull_up(rx_pin);
   pio_gpio_init(hw_->pio, rx_pin);
@@ -148,6 +151,9 @@ bool GpsDmaRx::begin(uint32_t rx_pin, uint32_t tx_pin) {
     channel_config_set_ring(&dma_config, true, kHalfBits);
     channel_config_set_dreq(&dma_config, pio_get_dreq(hw_->pio, hw_->sm, false));
     channel_config_set_chain_to(&dma_config, hw_->channels[1 - i]);
+    // Claiming a DMA channel does not reset its sticky bus-error flags.
+    // Configure through the non-triggering alias and clear both W1C flags.
+    dma_config.ctrl |= DMA_CH0_CTRL_TRIG_READ_ERROR_BITS | DMA_CH0_CTRL_TRIG_WRITE_ERROR_BITS;
     // PIO data occupies bits 31:24; a byte access still pops one FIFO word.
     const volatile uint8_t* fifo = reinterpret_cast<const volatile uint8_t*>(&hw_->pio->rxf[hw_->sm]) + 3;
     dma_channel_configure(ch, &dma_config, hw_->bytes + i * kHalf, fifo, kHalf, false);
@@ -162,7 +168,10 @@ bool GpsDmaRx::begin(uint32_t rx_pin, uint32_t tx_pin) {
   irq_set_enabled(DMA_IRQ_1, true);
   // No public GPS TX operation exists. Keep the configured command input at
   // UART idle HIGH without consuming an additional TX state machine.
-  if (tx_pin != uint32_t(-1)) { gpio_init(tx_pin); gpio_put(tx_pin, true); gpio_set_dir(tx_pin, true); }
+  if (tx_pin != uint32_t(-1)) {
+    hw_->tx_pin_configured = true;
+    gpio_init(tx_pin); gpio_put(tx_pin, true); gpio_set_dir(tx_pin, true);
+  }
   state_ = GpsReceiverState::Ready;
   dma_start_channel_mask(1u << hw_->channels[0]);
   pio_sm_set_enabled(hw_->pio, hw_->sm, true);
@@ -184,8 +193,8 @@ void GpsDmaRx::end() {
       dma_channel_unclaim(ch);
     }
     if (hw_->irq_registered && !--Hardware::users[hw_->core]) irq_remove_handler(DMA_IRQ_1, Hardware::irq);
-    if (hw_->sm >= 0) { gpio_init(hw_->rx_pin); gpio_disable_pulls(hw_->rx_pin); }
-    if (hw_->tx_pin < NUM_BANK0_GPIOS) gpio_init(hw_->tx_pin);
+    if (hw_->rx_pin_configured) { gpio_init(hw_->rx_pin); gpio_disable_pulls(hw_->rx_pin); }
+    if (hw_->tx_pin_configured) gpio_init(hw_->tx_pin);
     free(hw_->allocation);
     delete hw_; // PIOProgram releases its SM; its instructions are cached by the core.
     hw_ = nullptr;

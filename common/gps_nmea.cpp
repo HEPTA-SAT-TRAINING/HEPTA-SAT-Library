@@ -49,7 +49,7 @@ bool coordinate(const char* s, const char* dir, bool latitude, float* out) {
   if (!number(s, &raw) || raw < 0 || strlen(dir) != 1) return false;
   if (latitude ? (*dir != 'N' && *dir != 'S') : (*dir != 'E' && *dir != 'W')) return false;
   double n = strtod(s, nullptr);
-  if (n > (latitude ? 9000.0 : 18000.0)) return false;
+  if (n < 0 || n > (latitude ? 9000.0 : 18000.0)) return false;
   int degrees = int(n / 100);
   double minutes = n - degrees * 100;
   int limit = latitude ? 90 : 180;

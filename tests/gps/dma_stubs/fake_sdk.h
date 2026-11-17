@@ -13,6 +13,8 @@ void delay(uint32_t ms);
 #define DMA_IRQ_1 1
 #define DMA_CH0_CTRL_TRIG_EN_BITS 1u
 #define DMA_CH0_CTRL_TRIG_AHB_ERROR_BITS (1u << 31)
+#define DMA_CH0_CTRL_TRIG_READ_ERROR_BITS (1u << 30)
+#define DMA_CH0_CTRL_TRIG_WRITE_ERROR_BITS (1u << 29)
 #define PIO_FDEBUG_RXSTALL_LSB 24
 #define PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY 128
 #define PICO_PIO_VERSION 0
@@ -45,7 +47,7 @@ struct DmaRegisters {
   StatusRegister ints1;
 };
 extern DmaRegisters* dma_hw;
-struct dma_channel_config { uint ring_bits = 0, chain = 0, sm = 0; };
+struct dma_channel_config { uint ring_bits = 0, chain = 0, sm = 0; uint32_t ctrl = DMA_CH0_CTRL_TRIG_EN_BITS; };
 using irq_handler_t = void (*)();
 
 namespace sdk_model {
@@ -58,6 +60,7 @@ void bus_error();
 unsigned claimed_dma();
 unsigned claimed_sm();
 unsigned shared_handlers();
+unsigned gpio_init_count();
 void unrelated_irq(uint32_t bits);
 }
 

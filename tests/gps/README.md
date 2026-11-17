@@ -23,7 +23,9 @@ order, blocking waits/timeouts and preservation of outputs on legacy failure.
 A second binary links the production DMA transport against an SDK register
 model, checking chained half-buffers across many laps, byte order, frozen read
 limits, overrun/coalesced interrupts, framing/stall/bus error reporting,
-unrelated IRQ preservation, allocation failures and repeated resource release.
+unrelated IRQ preservation, allocation failures without touching unconfigured
+GPIOs, and repeated resource release. Coordinate tests include negative values
+that underflow the float representation.
 This model does not prove the SDK model's timing or hardware behaviour.
 
 `test_pio.py` executes the actual opcodes from the generated PIO header against

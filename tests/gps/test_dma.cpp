@@ -69,17 +69,24 @@ int main() {
   sdk_model::bus_error();
   CHECK(rx.available() == 0 && rx.state() == GpsReceiverState::ResourceError);
   rx.end(); empty_resources();
-  CHECK(rx.begin(13, NOPIN)); rx.end(); empty_resources();
+  CHECK(rx.begin(13, NOPIN));
+  for (unsigned n = 0; n < 1024; ++n) sdk_model::inject(value(n));
+  CHECK(rx.available() == 1024 && rx.state() == GpsReceiverState::Ready && rx.error_count() == 0);
+  rx.end(); empty_resources();
   CHECK(!rx.begin(99, 2)); empty_resources();
   CHECK(!rx.begin(13, 13)); empty_resources();
+  unsigned pins_before_failure = sdk_model::gpio_init_count();
   sdk_model::no_pio = true;
   CHECK(!rx.begin(13, 2)); empty_resources();
+  CHECK(sdk_model::gpio_init_count() == pins_before_failure);
   sdk_model::no_pio = false;
   sdk_model::dma_limit = 1;
   CHECK(!rx.begin(13, 2)); empty_resources();
+  CHECK(sdk_model::gpio_init_count() == pins_before_failure);
   sdk_model::dma_limit = NUM_DMA_CHANNELS;
   sdk_model::exclusive_irq = true;
   CHECK(!rx.begin(13, 2)); empty_resources();
+  CHECK(sdk_model::gpio_init_count() == pins_before_failure);
   sdk_model::exclusive_irq = false;
   for (int i = 0; i < 20; ++i) { CHECK(rx.begin(13, 2)); rx.end(); empty_resources(); }
   // Entire production stack: modelled DMA bytes -> real parser -> public API.
