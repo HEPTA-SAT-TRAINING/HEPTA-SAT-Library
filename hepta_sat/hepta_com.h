@@ -24,6 +24,8 @@ class HeptaCom : public HeptaComBase {
     }
 
     bool begin(XbeeMode, XbeeReceive mode = XbeeReceive::Stream) {
+      // Drive UART TX idle before releasing the radio from reset at OBC boot.
+      HeptaComBase::begin();
       pinMode(_xbee_reset_pin, OUTPUT);
       xbee_reset();
       if (start_api(mode)) return true;

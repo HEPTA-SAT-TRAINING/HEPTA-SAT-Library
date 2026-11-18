@@ -31,7 +31,7 @@ bool Xbee::begin(uint32_t baud) {
 }
 
 bool Xbee::begin_managed(XbeeReceive mode) {
-  begin();
+  if (!started_) begin();
   bool switched = set_api_mode(false);
   managed_ = true;  // A failed handshake must never fall back to raw RF output.
   if (!switched) return false;

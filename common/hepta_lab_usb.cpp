@@ -37,7 +37,12 @@ void HeptaLabUsb::handle(Stream& usb, HeptaComBase& com) {
   char* op = strtok_r(nullptr, " ", &ctx);
   char* arg = strtok_r(nullptr, " ", &ctx);
   HeptaZigbee* radio = com.zigbee();
-  if (!radio || !op || !arg) { usb.println("HEPTA1 ERR unavailable"); return; }
+  if (!radio) {
+    usb.print("HEPTA1 ERR unavailable ");
+    usb.println(com.last_error());
+    return;
+  }
+  if (!op || !arg) { usb.println("HEPTA1 ERR command"); return; }
   uint64_t value;
   if (!strcmp(op,"GET") && !strtok_r(nullptr," ",&ctx) && radio->query(arg,value)) {
     char result[48];
@@ -55,6 +60,13 @@ void HeptaLabUsb::handle(Stream& usb, HeptaComBase& com) {
     }
   }
   if (!strcmp(op,"PING") && parse_hex(arg,16,value) && !strtok_r(nullptr," ",&ctx)) {
+    // An RF reply can reach the ground USB port before its 0x8B reaches the OBC.
+    const uint32_t start = millis();
+    while (radio->result().state == XbeeTxResult::Pending && millis() - start < 1200)
+      delay(1);
+    if (radio->result().state == XbeeTxResult::Pending) {
+      usb.println("HEPTA1 ERR busy"); return;
+    }
     if (radio->ping(value)) usb.println("HEPTA1 OK");
     else {
       XbeeTxResult tx = radio->result();
