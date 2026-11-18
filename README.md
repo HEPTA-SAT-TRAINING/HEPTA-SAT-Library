@@ -73,6 +73,8 @@ void setup() {
 }
 ```
 
+### Switching to Transparent mode
+
 `set_transparent_mode()` and `set_api_mode()` enter XBee command mode and
 change `AP` from the microcontroller. Entering command mode requires guard
 times before and after `+++`, so a mode change takes several seconds.
@@ -133,8 +135,8 @@ void loop() {}
 
 | Example | Contents |
 |---------|----------|
-| [01_basic_transparent](examples/01_basic_transparent/01_basic_transparent.ino) | Send and receive text in Transparent mode |
-| [02_switch_transparent_mode](examples/02_switch_transparent_mode/02_switch_transparent_mode.ino) | Temporarily restore `AP=0` without `ATWR` |
+| [Transparent-mode send and receive](docs/modules/com.md#example) | Send a greeting and read a newline-terminated reply |
+| [Switching to Transparent mode](#switching-to-transparent-mode) | Temporarily restore `AP=0` with `com.set_transparent_mode()` |
 
 ## Repository layout
 
