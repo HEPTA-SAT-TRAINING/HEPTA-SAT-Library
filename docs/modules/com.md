@@ -13,6 +13,18 @@ deassert RESET in `begin()` and expose `xbee_reset()`.
 communication and AT commands to the [`Xbee` driver](../drivers/xbee.md).
 The initial implementation targets XBee AT / Transparent mode.
 
+## Radio setup
+
+Configure the radio for Transparent-mode communication.
+
+- `AP=0`
+- a matching PAN ID
+- `DH` / `DL` for the peer XBee
+- `BD=5` (38400 baud)
+
+The library opens the XBee UART at 38400 baud by default. Lab99 can reopen
+it at 9600 via `set_uart_baud()` if factory-default AT fails.
+
 ## API
 
 | Method | Description |
@@ -69,6 +81,23 @@ void loop() {
 }
 ```
 
-`set_transparent_mode()` and `set_api_mode()` do not write the setting to
-nonvolatile memory unless `save=true` is passed. API frame transmission and
-reception are not implemented in v0.1.
+## Switching to Transparent mode
+
+`set_transparent_mode()` and `set_api_mode()` enter XBee command mode and
+change `AP` from the microcontroller. Entering command mode requires guard
+times before and after `+++`, so a mode change takes several seconds.
+
+Both functions default to `save=false` and therefore do not send `ATWR`:
+
+```cpp
+com.set_transparent_mode();      // Temporary AP=0
+com.set_transparent_mode(true);  // AP=0 and write to nonvolatile memory
+```
+
+Specify `save=true` only when the setting must survive a power cycle. `ATWR`
+writes nonvolatile memory and should not be called frequently. The standard
+state for a reused kit is AT / Transparent mode.
+
+`set_api_mode()` only changes the XBee to `AP=1`. HeptaCom v0.1 does not
+implement API frame transmission or reception. After switching to API mode,
+calling `send("hello\n")` does not work as Transparent-mode communication.

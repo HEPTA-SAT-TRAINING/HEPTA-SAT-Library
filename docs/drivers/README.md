@@ -3,7 +3,7 @@
 Self-contained drivers for the individual chips and modules used by HEPTA-Sat.
 They live in [drv/](../../drv/) and know nothing about the satellite stack; the
 board and subsystem classes reuse them. For Lab7 sketches, see the
-[board connector API and sample wiring](../../README.md#hepta-sat-payload-connectors-lab7).
+[board connector API and sample wiring](../boards/hepta-sat.md#lab7-payload-connectors).
 
 | Driver | Class | Hardware | Bus |
 |--------|-------|----------|-----|

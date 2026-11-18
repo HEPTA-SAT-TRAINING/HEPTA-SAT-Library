@@ -79,3 +79,29 @@ void loop() {
   }
 }
 ```
+
+## Read and write an SD file (Lite)
+
+```cpp
+#include <HeptaSatLite.h>
+
+HeptaLiteCdh cdh;
+
+void setup() {
+  cdh.begin();
+
+  File file = cdh.create_file("test.txt");
+  if (file) {
+    cdh.write_file(file, "Hello, HEPTA-Sat\n");
+    file.close();
+  }
+
+  file = cdh.open_file("test.txt");
+  while (file && file.available()) {
+    Serial.write(cdh.read_file(file));
+  }
+  file.close();
+}
+
+void loop() {}
+```

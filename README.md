@@ -1,153 +1,28 @@
 # HEPTA-Sat Library
 
-Arduino library for the next-generation **HEPTA-Sat** educational CanSat/CubeSat
-kit. It provides the on-board software (CDH / COM / EPS / Sensor) for two boards
-that share a common code base:
+Arduino library for the HEPTA-SAT and HEPTA-SAT Lite educational satellite kits.
 
-- **HEPTA-SAT** &mdash; the full board (`HeptaSat.h`)
-- **HEPTA-SAT Lite** &mdash; the reduced board (`HeptaSatLite.h`)
+## Getting started
 
-A sketch includes exactly one of the two entry headers and uses the matching set
-of classes. The entry header includes the subsystem classes for that board. A sketch can also
-include a driver header for an external sensor.
+- [Install the library and run your first sketch](docs/getting-started.md)
+- Board guides and pin maps: [HEPTA-SAT](docs/boards/hepta-sat.md) · [HEPTA-SAT Lite](docs/boards/hepta-sat-lite.md)
 
-## At a glance
+## Subsystems
 
-| Subsystem | What it does | HEPTA-SAT | HEPTA-SAT Lite |
-|-----------|--------------|:---------:|:--------------:|
-| **CDH**    | SD card, serial logging, command handling | `HeptaCdh` | `HeptaLiteCdh` |
-| **COM**    | XBee telemetry over SoftwareSerial         | `HeptaCom` | `HeptaLiteCom` |
-| **EPS**    | Battery / rail voltages, current sense     | `HeptaEps` | `HeptaLiteEps` |
-| **Sensor** | BNO055 IMU; Full: analog temp / GPS / camera; Lite: BME280 T/H/P | `HeptaSensor` | `HeptaLiteSensor` |
+| Guide | Functions |
+|-------|-----------|
+| [CDH](docs/modules/cdh.md) | USB serial, SD storage, and command handling |
+| [COM](docs/modules/com.md) | XBee radio setup, telemetry, and commands |
+| [EPS](docs/modules/eps.md) | Payload power control, voltage, and current measurement |
+| [Sensor](docs/modules/sensor.md) | IMU, temperature, and board-specific sensors |
 
-GPS (GP-1818MK) and camera (Arducam Mini 2MP Plus) are only wired on the full
-`HeptaSensor`. Lite uses an onboard BME280 (same Wire bus as the IMU) for
-temperature, humidity, and pressure.
+## Examples and reference
 
-## HEPTA-SAT payload connectors (Lab7)
-
-Each Lab7 sample uses the following wiring on the full board. The sketch includes
-`"src/HeptaSat.h"` from its bundled library and enables the 3.3 V payload rail before initialization.
-
-| Sensor | Board label | Initialization in the sample |
-|--------|-------------|------------------------------|
-| `HeptaLightTemt6000` | ADC1 | `light.begin(USER1)` |
-| `HeptaUvGuvaS12sd` | ADC1 | `uv.begin(USER1)` |
-| `HeptaAirQualityMp503` | ADC1 | `air_quality.begin_after_warmup(USER1)` after the 20-second countdown |
-| `HeptaHcSr04` | IO1 (TRIG), IO2 (ECHO) | `ultrasonic.begin(USER_IO_1, USER_IO_2)` |
-| `Bme280` | SDA, SCL | `bme.begin()` (include `"src/drv/bme280_bosch.h"` as well) |
-
-If you move an analog signal to **ADC2** or **ADC3**, change the argument to
-`USER2` or `USER3`, respectively. To let the air quality driver wait the
-20 seconds itself, call `air_quality.begin(USER1)` immediately after power-on.
-See the [full-board pin map](docs/boards/hepta-sat.md#lab7-payload-connectors).
-
-## XBee communication
-
-HeptaCom v0.1 is a high-level wrapper for an XBee operating in AT /
-Transparent mode. Both `HeptaCom` and `HeptaLiteCom` use SoftwareSerial with
-RX pin 15 and TX pin 14, and both drive XBEE_RESET on GP1.
-
-Before using the library, configure the XBee with settings appropriate for the
-kit:
-
-- `AP=0`
-- a matching PAN ID
-- `DH` / `DL` for the peer XBee
-- `BD=5` (38400 baud)
-
-The library opens the XBee UART at 38400 baud by default. Lab99 can reopen
-it at 9600 via `set_uart_baud()` if factory-default AT fails.
-
-`send()` transmits exactly the bytes supplied. It does not append a newline:
-
-```cpp
-#include <HeptaSat.h>
-
-HeptaCom com;
-
-void setup() {
-  Serial.begin(115200);
-  com.begin();
-  com.send("hello\n");
-}
-```
-
-### Switching to Transparent mode
-
-`set_transparent_mode()` and `set_api_mode()` enter XBee command mode and
-change `AP` from the microcontroller. Entering command mode requires guard
-times before and after `+++`, so a mode change takes several seconds.
-
-Both functions default to `save=false` and therefore do not send `ATWR`:
-
-```cpp
-com.set_transparent_mode();      // Temporary AP=0
-com.set_transparent_mode(true);  // AP=0 and write to nonvolatile memory
-```
-
-Specify `save=true` only when the setting must survive a power cycle. `ATWR`
-writes nonvolatile memory and should not be called frequently. The standard
-state for a reused kit is AT / Transparent mode.
-
-`set_api_mode()` only changes the XBee to `AP=1`. HeptaCom v0.1 does not
-implement API frame transmission or reception. After switching to API mode,
-calling `send("hello\n")` does not work as Transparent-mode communication.
-
-## Quick start
-
-```cpp
-#include <HeptaSatLite.h>
-
-HeptaLiteCdh cdh;
-
-void setup() {
-  cdh.begin();
-
-  File file = cdh.create_file("test.txt");
-  if (file) {
-    cdh.write_file(file, "Hello, HEPTA-Sat\n");
-    file.close();
-  }
-
-  file = cdh.open_file("test.txt");
-  while (file && file.available()) {
-    Serial.write(cdh.read_file(file));
-  }
-  file.close();
-}
-
-void loop() {}
-```
-
-## Documentation
-
-| Document | Contents |
-|----------|----------|
-| [docs/getting-started.md](docs/getting-started.md) | Install, board selection, first sketch |
-| [docs/architecture.md](docs/architecture.md)       | The 3-layer design (entry &rarr; board &rarr; base &rarr; driver) |
-| [docs/boards/hepta-sat.md](docs/boards/hepta-sat.md) | Full board: pin map + class list |
-| [docs/boards/hepta-sat-lite.md](docs/boards/hepta-sat-lite.md) | Lite board: pin map + class list |
-| [docs/modules/](docs/modules/) | Per-subsystem API: [CDH](docs/modules/cdh.md) · [COM](docs/modules/com.md) · [EPS](docs/modules/eps.md) · [Sensor](docs/modules/sensor.md) |
-| [docs/drivers/](docs/drivers/README.md) | Hardware drivers: ADC, camera, GPS, IMU, Unit Roller |
-
-## Examples
-
-| Example | Contents |
-|---------|----------|
-| [Transparent-mode send and receive](docs/modules/com.md#example) | Send a greeting and read a newline-terminated reply |
-| [Switching to Transparent mode](#switching-to-transparent-mode) | Temporarily restore `AP=0` with `com.set_transparent_mode()` |
-
-## Repository layout
-
-```
-HeptaSat.h / HeptaSatLite.h   entry headers (include one in your sketch)
-hepta_sat/                    full-board classes (pins fixed here)
-hepta_sat_lite/               Lite-board classes (pins fixed here)
-common/                       shared base classes (the actual logic)
-drv/                          hardware drivers (ADC, camera, GPS, IMU, ...)
-docs/                         documentation (this folder set)
-```
+- [Lab7 payload connectors and sensor wiring](docs/boards/hepta-sat.md#lab7-payload-connectors)
+- XBee examples: [send and receive text](docs/modules/com.md#example) · [switch to Transparent mode](docs/modules/com.md#switching-to-transparent-mode)
+- [GPS latest-reading sketch (.ino)](examples/03_gps_latest/03_gps_latest.ino)
+- [Hardware drivers](docs/drivers/README.md)
+- [Library architecture](docs/architecture.md)
 
 ## License
 

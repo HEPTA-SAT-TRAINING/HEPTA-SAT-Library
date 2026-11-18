@@ -58,6 +58,23 @@ The [pin definitions](../../hepta_sat/hepta_payload_pins.h) give analog and
 digital terminals distinct types. The [payload sensor classes](../../hepta_sat/hepta_payload_sensors.h)
 accept the matching type and pass the hardware assignment to the driver.
 
+#### Sample wiring and initialization
+
+Each Lab7 sample uses the following wiring on the full board. The sketch includes
+`"src/HeptaSat.h"` from its bundled library and enables the 3.3 V payload rail before initialization.
+
+| Sensor | Board label | Initialization in the sample |
+|--------|-------------|------------------------------|
+| `HeptaLightTemt6000` | ADC1 | `light.begin(USER1)` |
+| `HeptaUvGuvaS12sd` | ADC1 | `uv.begin(USER1)` |
+| `HeptaAirQualityMp503` | ADC1 | `air_quality.begin_after_warmup(USER1)` after the 20-second countdown |
+| `HeptaHcSr04` | IO1 (TRIG), IO2 (ECHO) | `ultrasonic.begin(USER_IO_1, USER_IO_2)` |
+| `Bme280` | SDA, SCL | `bme.begin()` (include `"src/drv/bme280_bosch.h"` as well) |
+
+If you move an analog signal to **ADC2** or **ADC3**, change the argument to
+`USER2` or `USER3`, respectively. To let the air quality driver wait the
+20 seconds itself, call `air_quality.begin(USER1)` immediately after power-on.
+
 ### OBC (MCU board)
 | Signal | Pin |
 |--------|----:|
