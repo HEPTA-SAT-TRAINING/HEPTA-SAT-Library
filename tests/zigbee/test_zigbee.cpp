@@ -26,6 +26,7 @@ public:
   std::map<std::string,uint64_t> regs{{"HV",0x2e4e},{"VR",0x4061},{"AP",1},{"AO",0},{"NP",84},
     {"DH",ground>>32},{"DL",uint32_t(ground)},{"ID",32},{"SC",0x2000},{"CE",0}};
   bool reply=true;
+  bool fail_discovery=false;
   std::string reject;
   int available() override { return int(rx.size()); }
   int read() override { if(rx.empty()) return -1; auto b=rx.front(); rx.pop_front(); return b; }
@@ -54,6 +55,9 @@ public:
         uint64_t v=0; for(size_t i=4;i<b.size();++i) v=(v<<8)|b[i]; regs[k]=v;
       } else if(k!="AC") append64(res,regs.at(k));
       emit(res);
+    } else if(b[0]==0x11 && fail_discovery) {
+      fail_discovery=false;
+      status(b[1],0x24);
     } else if(reply) {
       status(b[1],0);
       if(b[0]==0x11) packet(other,Bytes(b.begin()+20,b.end()));
@@ -113,7 +117,10 @@ int main() {
   assert(!radio.configure_network(48,1,0) && p.regs["ID"]==32 && p.regs["SC"]==0x2000);
   assert(radio.configure_network(48,1,0) && p.regs["ID"]==48);
   p.reply=true;
+  p.fail_discovery=true;
+  auto before_ping=p.tx.size();
   assert(radio.ping(other));
+  assert(p.tx.size()==before_ping+2);
   HeptaZigbee stream(p,XbeeReceive::Stream);
   assert(stream.initialize());
   p.packet(other,{1}); p.packet(ground,special);

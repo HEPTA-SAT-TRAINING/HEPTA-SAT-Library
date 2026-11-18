@@ -54,9 +54,17 @@ void HeptaLabUsb::handle(Stream& usb, HeptaComBase& com) {
       usb.println("HEPTA1 OK"); return;
     }
   }
-  if (!strcmp(op,"PING") && parse_hex(arg,16,value) && !strtok_r(nullptr," ",&ctx) &&
-      radio->ping(value)) {
-    usb.println("HEPTA1 OK"); return;
+  if (!strcmp(op,"PING") && parse_hex(arg,16,value) && !strtok_r(nullptr," ",&ctx)) {
+    if (radio->ping(value)) usb.println("HEPTA1 OK");
+    else {
+      XbeeTxResult tx = radio->result();
+      if (tx.state == XbeeTxResult::Failed) {
+        char detail[24];
+        snprintf(detail,sizeof(detail),"HEPTA1 ERR TX %02X",tx.delivery);
+        usb.println(detail);
+      } else usb.println("HEPTA1 ERR loopback");
+    }
+    return;
   }
   usb.println("HEPTA1 ERR");
 }

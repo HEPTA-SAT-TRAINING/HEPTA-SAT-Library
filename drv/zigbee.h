@@ -72,6 +72,7 @@ private:
   bool fail(const char* reason);
   void consume();
   bool write_frame(const uint8_t* body, size_t length);
+  bool ping_once(uint64_t peer);
   void poll();
   void parse(uint8_t byte);
   void dispatch();

@@ -241,6 +241,17 @@ int HeptaZigbee::read_byte() {
 bool HeptaZigbee::ping(uint64_t peer) {
   if (!ready_ || !unicast(peer) || result().state == XbeeTxResult::Pending)
     return fail("invalid peer or transmission pending");
+  if (ping_once(peer)) return true;
+  if (tx_.state != XbeeTxResult::Failed || tx_.delivery != 0x24) return false;
+  // The S2C can fail its first address discovery after joining. Retry only the
+  // diagnostic loopback, which has no side effects on the remote application.
+  uint32_t start = millis();
+  while (millis() - start < 300) { poll(); delay(1); }
+  return ping_once(peer);
+}
+
+bool HeptaZigbee::ping_once(uint64_t peer) {
+  tx_ = XbeeTxResult{};
   uint8_t body[20 + sizeof(probe_)] = {0x11, allocate_id()};
   if (!body[1]) return false;
   encode(peer, body + 2, 8);
