@@ -19,11 +19,21 @@ class HeptaCom : public HeptaComBase {
     bool begin(void) {
       pinMode(_xbee_reset_pin, OUTPUT);
       digitalWrite(_xbee_reset_pin, HIGH);
+      if (managed()) xbee_reset();
       return HeptaComBase::begin();
+    }
+
+    bool begin(XbeeMode, XbeeReceive mode = XbeeReceive::Stream) {
+      pinMode(_xbee_reset_pin, OUTPUT);
+      xbee_reset();
+      if (start_api(mode)) return true;
+      xbee_reset();  // Recover the saved UART mode after a failed handshake.
+      return false;
     }
 
     /** @brief Hardware-reset the XBee via the active-low RESET line. */
     void xbee_reset(void) {
+      invalidate_api();
       digitalWrite(_xbee_reset_pin, LOW);
       delay(5);
       digitalWrite(_xbee_reset_pin, HIGH);

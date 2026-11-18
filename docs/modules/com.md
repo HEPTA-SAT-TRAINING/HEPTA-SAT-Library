@@ -33,7 +33,7 @@ The initial implementation targets XBee AT / Transparent mode.
 | `bool exit_command_mode()` | Send `ATCN` and leave command mode. |
 | `bool send_at_command(...)` | Send an AT command and read its response. |
 | `bool set_transparent_mode(bool save=false)` | Set `AP=0`. |
-| `bool set_api_mode(bool save=false)` | Set `AP=1`; API frames are not implemented. |
+| `bool set_api_mode(bool save=false)` | Set `AP=1` for a sketch that handles raw frames itself. |
 | `const char* last_error()` | Return the most recent error message. |
 
 `begin()` and `xbee_reset()` live on `HeptaCom` / `HeptaLiteCom`. The remaining
@@ -70,5 +70,46 @@ void loop() {
 ```
 
 `set_transparent_mode()` and `set_api_mode()` do not write the setting to
-nonvolatile memory unless `save=true` is passed. API frame transmission and
-reception are not implemented in v0.1.
+nonvolatile memory unless `save=true` is passed.
+
+## S2C Zigbee joint labs
+
+Use the shipped 38400-baud pair with saved AP=0, AO=0 and a unicast DH/DL.
+The managed overload pulses the existing reset line and enables AP=1 in RAM.
+Check the return from begin before using the radio. Full and Lite share the
+same interface. Power-cycle the radio when returning to an older sketch.
+
+- `begin(XBEE_MODE_API)` offers byte-stream reads from the paired sender.
+- `begin(XBEE_MODE_API, XbeeReceive::Packets)` offers complete packets from all
+  senders via `receive_packet(packet)`. Each carries source, options, length
+  and binary data. Four packets can wait. A full queue drops a whole packet
+  and increments `zigbee()->dropped()`. Poll regularly, including during other work.
+- `send`, `printf` and `write` send to the DH/DL pair, splitting at the radio's
+  NP limit. Success means local submission. The last fragment's radio status
+  is available from `zigbee()->paired_result()`. Subsequent fragments wait for
+  the previous radio result. A returned byte count is not an application ACK.
+- `send_to(peer, bytes, size)` submits one unicast and returns its nonzero
+  frame ID. Zero means the request was rejected (including busy or oversize).
+  Poll `tx_result()` for Pending, Delivered, Failed or TimedOut and match its
+  frame_id. Collect it before submitting the next addressed packet. Default
+  output uses a separate slot and retains its destination.
+- `zigbee()->query("DB", value)` reads a numeric register. The joint lab USB
+  service uses local queued AT requests for temporary network changes.
+  `zigbee()->ping(peer)` verifies a matching Zigbee loopback response.
+
+Typical packet reply:
+
+```cpp
+XbeePacket packet;
+if (com.tx_result().state != XbeeTxResult::Pending && com.receive_packet(packet)) {
+  const uint8_t reply[] = {'O', 'K'};
+  com.send_to(packet.source, reply, sizeof(reply));
+}
+```
+
+Run the host regression from the library root with a C++17 compiler:
+
+```sh
+c++ -std=c++17 -DHEPTA_ZIGBEE_TEST -Itests/zigbee/stubs tests/zigbee/test_zigbee.cpp drv/zigbee.cpp -o zigbee_test
+./zigbee_test
+```

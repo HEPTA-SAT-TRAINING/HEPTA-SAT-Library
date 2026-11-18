@@ -25,6 +25,15 @@ class HeptaComBase {
     static constexpr uint8_t IMAGE_ERROR_INTERNAL_BUFFER = 0x04;
 
     bool begin(void);
+    uint8_t send_to(uint64_t peer, const uint8_t* bytes, size_t length) {
+      return xbee_.api() ? xbee_.api()->send_to(peer, bytes, length) : 0;
+    }
+    XbeeTxResult tx_result() { return xbee_.api() ? xbee_.api()->result() : XbeeTxResult{}; }
+    bool receive_packet(XbeePacket& packet) {
+      return xbee_.api() && xbee_.api()->receive_packet(packet);
+    }
+    HeptaZigbee* zigbee() { return xbee_.api(); }
+
     bool set_uart_baud(uint32_t baud);
 
     bool send(const char* text);
@@ -73,6 +82,9 @@ class HeptaComBase {
     void send_image_error(uint8_t error_code);
 
   protected:
+    bool start_api(XbeeReceive mode) { return xbee_.begin_managed(mode); }
+    bool managed() const { return xbee_.managed(); }
+    void invalidate_api() { xbee_.invalidate_api(); }
     HeptaComBase(uint8_t rx, uint8_t tx,
                  uint8_t sd_cs, uint8_t sd_tx, uint8_t sd_rx, uint8_t sd_sck)
       : xbee_(rx, tx), storage_(sd_cs, sd_tx, sd_rx, sd_sck) {}

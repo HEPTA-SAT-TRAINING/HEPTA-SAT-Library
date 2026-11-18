@@ -69,9 +69,9 @@ Specify `save=true` only when the setting must survive a power cycle. `ATWR`
 writes nonvolatile memory and should not be called frequently. The standard
 state for a reused kit is AT / Transparent mode.
 
-`set_api_mode()` only changes the XBee to `AP=1`. HeptaCom v0.1 does not
-implement API frame transmission or reception. After switching to API mode,
-calling `send("hello\n")` does not work as Transparent-mode communication.
+`set_api_mode()` remains a raw-UART option for sketches that construct their
+own frames. For library-managed S2C Zigbee frames, start with
+`com.begin(XBEE_MODE_API)`. See the [COM interface](docs/modules/com.md).
 
 ## Quick start
 

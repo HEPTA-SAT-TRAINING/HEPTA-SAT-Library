@@ -10,7 +10,7 @@ bool HeptaComBase::begin(void) {
 }
 
 bool HeptaComBase::set_uart_baud(uint32_t baud) {
-  return xbee_.begin(baud);
+  return !xbee_.managed() && xbee_.begin(baud);
 }
 
 bool HeptaComBase::send(const char* text) {

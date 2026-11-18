@@ -8,6 +8,8 @@
 
 #include <Arduino.h>
 #include <SoftwareSerial.h>
+#include <memory>
+#include "zigbee.h"
 
 
 class Xbee {
@@ -16,6 +18,11 @@ class Xbee {
       : serial_(rx_pin, tx_pin), last_error_(nullptr), started_(false) {}
 
     bool begin(uint32_t baud = 38400);
+
+    bool begin_managed(XbeeReceive mode);
+    void invalidate_api() { api_.reset(); }
+    bool managed() const { return managed_; }
+    HeptaZigbee* api() { return api_.get(); }
 
     bool send(const char* text);
     bool send(const uint8_t* data, size_t length);
@@ -46,6 +53,8 @@ class Xbee {
     SoftwareSerial serial_;
     const char* last_error_;
     bool started_;
+    bool managed_ = false;
+    std::unique_ptr<HeptaZigbee> api_;
 
     void clear_input(void);
     bool wait_for_response(const char* expected, uint32_t timeout_ms);

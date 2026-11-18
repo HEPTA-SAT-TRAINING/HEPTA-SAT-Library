@@ -1,6 +1,7 @@
 #include "xbee.h"
 
 #include <string.h>
+#include <new>
 
 
 namespace {
@@ -21,9 +22,26 @@ bool Xbee::begin(uint32_t baud) {
     serial_.end();
     delay(1);
   }
+  api_.reset();
+  managed_ = false;
   serial_.begin(baud);
   started_ = true;
   last_error_ = nullptr;
+  return true;
+}
+
+bool Xbee::begin_managed(XbeeReceive mode) {
+  begin();
+  bool switched = set_api_mode(false);
+  managed_ = true;  // A failed handshake must never fall back to raw RF output.
+  if (!switched) return false;
+  api_.reset(new (std::nothrow) HeptaZigbee(serial_, mode));
+  if (!api_) { last_error_ = "API allocation failed"; return false; }
+  if (!api_->initialize()) {
+    last_error_ = api_->error();
+    api_.reset();
+    return false;
+  }
   return true;
 }
 
@@ -46,6 +64,11 @@ bool Xbee::send(const uint8_t* data, size_t length) {
     return false;
   }
 
+  if (managed_) {
+    if (!api_) return false;
+    last_error_ = nullptr;
+    return api_->send(data, length);
+  }
   if (serial_.write(data, length) != length) {
     last_error_ = "failed to send all data";
     return false;
@@ -100,8 +123,8 @@ int Xbee::receive(uint8_t* buffer,
   const uint32_t start_ms = millis();
 
   while (received < buffer_size) {
-    while (serial_.available() > 0 && received < buffer_size) {
-      int value = serial_.read();
+    while (available() && received < buffer_size) {
+      int value = read_byte();
       if (value >= 0) {
         buffer[received++] = static_cast<uint8_t>(value);
       }
@@ -136,8 +159,8 @@ int Xbee::receive_until(char terminator,
   const uint32_t start_ms = millis();
 
   while (true) {
-    if (serial_.available() > 0) {
-      int value = serial_.read();
+    if (available()) {
+      int value = read_byte();
       if (value < 0) {
         continue;
       }
@@ -167,18 +190,22 @@ int Xbee::receive_until(char terminator,
 }
 
 bool Xbee::available(void) {
+  if (managed_) return api_ && api_->peek_byte() >= 0;
   return serial_.available() > 0;
 }
 
 int Xbee::read_byte(void) {
+  if (managed_) return api_ ? api_->read_byte() : -1;
   return serial_.read();
 }
 
 size_t Xbee::write_byte(uint8_t data) {
+  if (managed_) return send(&data, 1) ? 1 : 0;
   return serial_.write(data);
 }
 
 bool Xbee::enter_command_mode(void) {
+  if (managed_) return false;
   clear_input();
   delay(XBEE_GUARD_TIME_MS);
 
@@ -212,6 +239,7 @@ bool Xbee::send_at_command(const char* command,
                            char* response,
                            size_t response_size,
                            uint32_t timeout_ms) {
+  if (managed_) return false;
   if (command == nullptr) {
     last_error_ = "AT command is null";
     return false;
@@ -243,7 +271,8 @@ bool Xbee::set_api_mode(bool save) {
 }
 
 const char* Xbee::last_error(void) const {
-  return last_error_ == nullptr ? "" : last_error_;
+  if (last_error_) return last_error_;
+  return api_ ? api_->error() : "";
 }
 
 void Xbee::clear_input(void) {
