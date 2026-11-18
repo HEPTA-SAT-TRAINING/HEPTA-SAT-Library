@@ -19,7 +19,7 @@ USER payload channels (V4.1.1: USER1/2/3 = CH5/6/7).
 Classification follows the Seeed `slope()` algorithm. Thresholds from the
 original 10-bit Arduino examples are scaled ×4 for 12-bit MCP3208 readings.
 
-## API
+## Low-level driver API (`AirQualityMp503`)
 
 | Method | Description |
 |--------|-------------|
@@ -30,12 +30,20 @@ original 10-bit Arduino examples are scaled ×4 for 12-bit MCP3208 readings.
 
 ## HEPTA-SAT example
 
-```cpp
-#include "HeptaSat.h"
+`aq.begin(USER1)` includes a 20-second warm-up. The Lab7 sketch prints its own
+20-second countdown after power-on, then calls `begin_after_warmup(USER1)`.
 
+```cpp
+#include "src/HeptaSat.h"
+
+HeptaCdh cdh;
+HeptaEps eps;
 HeptaAirQualityMp503 aq;
 
 void setup() {
+  cdh.begin();
+  eps.init();
+  eps.switch_3V3_on();
   aq.begin(USER1);
 }
 

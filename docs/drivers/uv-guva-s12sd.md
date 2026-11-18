@@ -18,7 +18,7 @@ payload channels (V4.1.1: USER1/2/3 = CH5/6/7).
 
 Voltage is averaged over **16** raw samples before conversion.
 
-## API
+## Low-level driver API (`UvGuvaS12sd`)
 
 | Method | Description |
 |--------|-------------|
@@ -32,11 +32,16 @@ Voltage is averaged over **16** raw samples before conversion.
 ## HEPTA-SAT example
 
 ```cpp
-#include "HeptaSat.h"
+#include "src/HeptaSat.h"
 
+HeptaCdh cdh;
+HeptaEps eps;
 HeptaUvGuvaS12sd uv;
 
 void setup() {
+  cdh.begin();
+  eps.init();
+  eps.switch_3V3_on();
   uv.begin(USER1);
 }
 

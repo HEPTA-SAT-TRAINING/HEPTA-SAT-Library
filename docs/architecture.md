@@ -28,16 +28,19 @@ board-specific pin assignments and conversion formulas separate.
 ## Layer responsibilities
 
 ### Entry header
-[HeptaSat.h](../HeptaSat.h) and [HeptaSatLite.h](../HeptaSatLite.h) are the only
-headers a sketch includes. Each one pulls in exactly the classes that exist for
-that board &mdash; nothing else. Including both, or mixing classes across boards,
-is not supported.
+Sketches include the entry header for their board, [HeptaSat.h](../HeptaSat.h)
+or [HeptaSatLite.h](../HeptaSatLite.h). Full-board Lab7 sketches also include
+the BME280 driver header when using the external I2C module.
 
 ### Board layer (`hepta_sat/`, `hepta_sat_lite/`)
 Thin classes whose only job is to **fix the hardware configuration** of the
 board: SD/SPI pins, ADC pins, XBee RX/TX/RESET, etc. They pass those values to
 the base-class constructor and, where the boards differ, add board-specific
 methods (Full analog temperature / GPS / camera; Lite BME280 T/H/P).
+
+The full-board [Lab7 payload connectors](boards/hepta-sat.md#lab7-payload-connectors)
+are defined in `hepta_payload_pins.h`. The classes in `hepta_payload_sensors.h`
+translate typed connector names and call the existing sensor drivers directly.
 
 ### Base layer (`common/`)
 Where the real work lives. `HeptaCdhBase`, `HeptaComBase`, `HeptaEpsBase`, and
@@ -59,8 +62,7 @@ compose them (e.g. `HeptaSensor` owns a `CameraArducam2mp` and a `Gps1818mk`,
 ## Why this shape
 
 - **One implementation, two boards.** Bug fixes in `common/` benefit both boards.
-- **Pins live in one obvious place.** To re-wire a board, edit its constructor in
-  the board layer; no logic changes.
+- **Board-specific wiring** lives in the board layer, including the Lab7 payload pin map.
 - **Drivers are reusable and testable in isolation** from the satellite stack.
 
 ## COM

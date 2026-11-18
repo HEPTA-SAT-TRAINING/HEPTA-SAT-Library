@@ -8,8 +8,8 @@ that share a common code base:
 - **HEPTA-SAT Lite** &mdash; the reduced board (`HeptaSatLite.h`)
 
 A sketch includes exactly one of the two entry headers and uses the matching set
-of classes. Everything else (shared base classes, hardware drivers) is pulled in
-automatically.
+of classes. The entry header includes the subsystem classes for that board. A sketch can also
+include a driver header for an external sensor.
 
 ## At a glance
 
@@ -26,19 +26,21 @@ temperature, humidity, and pressure.
 
 ## HEPTA-SAT payload connectors (Lab7)
 
-After enabling payload power, pass the terminal printed on the board to the sensor:
+Each Lab7 sample uses the following wiring on the full board. The sketch includes
+`"src/HeptaSat.h"` from its bundled library and enables the 3.3 V payload rail before initialization.
 
-| Sensor class | Example |
-|--------------|---------|
-| `HeptaLightTemt6000` | `light.begin(USER1)` |
-| `HeptaUvGuvaS12sd` | `uv.begin(USER2)` |
-| `HeptaAirQualityMp503` | `air_quality.begin(USER3)` (includes the 20-second warm-up) |
-| `HeptaHcSr04` | `ultrasonic.begin(USER_IO_1, USER_IO_2)` (TRIG, ECHO) |
+| Sensor | Board label | Initialization in the sample |
+|--------|-------------|------------------------------|
+| `HeptaLightTemt6000` | ADC1 | `light.begin(USER1)` |
+| `HeptaUvGuvaS12sd` | ADC1 | `uv.begin(USER1)` |
+| `HeptaAirQualityMp503` | ADC1 | `air_quality.begin_after_warmup(USER1)` after the 20-second countdown |
+| `HeptaHcSr04` | IO1 (TRIG), IO2 (ECHO) | `ultrasonic.begin(USER_IO_1, USER_IO_2)` |
+| `Bme280` | SDA, SCL | `bme.begin()` (include `"src/drv/bme280_bosch.h"` as well) |
 
-The three analog sensors accept any of `USER1`, `USER2`, or `USER3`.
-If the sketch already waited 20 seconds after power-on, use
-`air_quality.begin_after_warmup(USER3)` on the selected input.
-For the BME280 on the payload I2C bus, use the driver's `bme.begin()`.
+If you move an analog signal to **ADC2** or **ADC3**, change the argument to
+`USER2` or `USER3`, respectively. To let the air quality driver wait the
+20 seconds itself, call `air_quality.begin(USER1)` immediately after power-on.
+See the [full-board pin map](docs/boards/hepta-sat.md#lab7-payload-connectors).
 
 ## XBee communication
 

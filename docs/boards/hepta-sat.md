@@ -13,7 +13,7 @@ Entry header: [HeptaSat.h](../../HeptaSat.h) &mdash; `#include <HeptaSat.h>`
 
 ## Pin map
 
-Pins are fixed in each board class's constructor.
+The full-board library defines these assignments for HEPTA-SAT V4.1.1.
 
 ### COM (XBee)
 | Signal | Pin |
@@ -42,6 +42,21 @@ Pins are fixed in each board class's constructor.
 Rail voltages and the solar/charge currents are read through an external
 **MCP3208** ADC (see [drivers/adc-mcp3208.md](../drivers/adc-mcp3208.md));
 the bus current comes straight from the MCU ADC (GP28).
+
+### Lab7 payload connectors
+
+| Payload board label | Sketch argument | Hardware signal |
+|---------------------|-----------------|-----------------|
+| ADC1 | `USER1` | MCP3208 CH5 |
+| ADC2 | `USER2` | MCP3208 CH6 |
+| ADC3 | `USER3` | MCP3208 CH7 |
+| IO1 | `USER_IO_1` | GP21 |
+| IO2 | `USER_IO_2` | GP22 |
+| SDA / SCL | `bme.begin()` takes no pin arguments | Wire1 on GP6 / GP7 |
+
+The [pin definitions](../../hepta_sat/hepta_payload_pins.h) give analog and
+digital terminals distinct types. The [payload sensor classes](../../hepta_sat/hepta_payload_sensors.h)
+accept the matching type and pass the hardware assignment to the driver.
 
 ### OBC (MCU board)
 | Signal | Pin |

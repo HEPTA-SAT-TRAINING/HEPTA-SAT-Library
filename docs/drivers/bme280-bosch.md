@@ -30,11 +30,18 @@ compatible). Lite onboard BME280 shares **Wire** with the BNO055.
 ## Example (Full payload, Wire1 GP6/7)
 
 ```cpp
-#include "drv/bme280_bosch.h"
+#include "src/HeptaSat.h"
+#include "src/drv/bme280_bosch.h"
 
+HeptaCdh cdh;
+HeptaEps eps;
 Bme280 bme;
 
 void setup() {
+  cdh.begin();
+  eps.init();
+  eps.switch_3V3_on();
+  delay(100);
   bme.begin();  // Wire1 GP6/GP7, auto address
 }
 

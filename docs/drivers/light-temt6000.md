@@ -15,7 +15,7 @@ output is read through the board **MCP3208** USER payload channels
 | Interface | Analog via MCP3208 USER1 / USER2 / USER3 (CS = GP17 on HEPTA-SAT) |
 | Supply | 3.3 V payload rail |
 
-## API
+## Low-level driver API (`LightTemt6000`)
 
 | Method | Description |
 |--------|-------------|
@@ -28,11 +28,16 @@ output is read through the board **MCP3208** USER payload channels
 ## HEPTA-SAT example
 
 ```cpp
-#include "HeptaSat.h"
+#include "src/HeptaSat.h"
 
+HeptaCdh cdh;
+HeptaEps eps;
 HeptaLightTemt6000 light;
 
 void setup() {
+  cdh.begin();
+  eps.init();
+  eps.switch_3V3_on();
   light.begin(USER1);
 }
 

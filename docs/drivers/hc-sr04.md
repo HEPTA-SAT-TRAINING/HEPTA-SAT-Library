@@ -26,7 +26,7 @@ Self-contained driver for the **HC-SR04 2020** ultrasonic ranging module
 Default timeout is **25000 µs** (about 4 m one-way).
 Module documentation recommends ≥200 ms between measurements.
 
-## API
+## Low-level driver API (`HcSr04`)
 
 | Method | Description |
 |--------|-------------|
@@ -38,11 +38,16 @@ Module documentation recommends ≥200 ms between measurements.
 ## HEPTA-SAT example
 
 ```cpp
-#include "HeptaSat.h"
+#include "src/HeptaSat.h"
 
+HeptaCdh cdh;
+HeptaEps eps;
 HeptaHcSr04 ultrasonic;
 
 void setup() {
+  cdh.begin();
+  eps.init();
+  eps.switch_3V3_on();
   ultrasonic.begin(USER_IO_1, USER_IO_2);
 }
 
