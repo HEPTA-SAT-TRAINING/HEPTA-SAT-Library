@@ -23,6 +23,23 @@ automatically.
 GPS (GP-1818MK) and camera (Arducam Mini 2MP Plus) are only wired on the full
 `HeptaSensor`. Lite uses an onboard BME280 (same Wire bus as the IMU) for
 temperature, humidity, and pressure.
+
+## HEPTA-SAT payload connectors (Lab7)
+
+After enabling payload power, pass the terminal printed on the board to the sensor:
+
+| Sensor class | Example |
+|--------------|---------|
+| `HeptaLightTemt6000` | `light.begin(USER1)` |
+| `HeptaUvGuvaS12sd` | `uv.begin(USER2)` |
+| `HeptaAirQualityMp503` | `air_quality.begin(USER3)` (includes the 20-second warm-up) |
+| `HeptaHcSr04` | `ultrasonic.begin(USER_IO_1, USER_IO_2)` (TRIG, ECHO) |
+
+The three analog sensors accept any of `USER1`, `USER2`, or `USER3`.
+If the sketch already waited 20 seconds after power-on, use
+`air_quality.begin_after_warmup(USER3)` on the selected input.
+For the BME280 on the payload I2C bus, use the driver's `bme.begin()`.
+
 ## XBee communication
 
 HeptaCom v0.1 is a high-level wrapper for an XBee operating in AT /

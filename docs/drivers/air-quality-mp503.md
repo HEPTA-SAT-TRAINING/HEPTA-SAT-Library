@@ -28,22 +28,18 @@ original 10-bit Arduino examples are scaled ×4 for 12-bit MCP3208 readings.
 | `QualityLevel slope()` | Returns `FORCE_SIGNAL`, `HIGH_POLLUTION`, `LOW_POLLUTION`, or `FRESH_AIR`. |
 | `uint16_t get_raw()` | Latest 12-bit ADC value. |
 
-## Example
+## HEPTA-SAT example
 
 ```cpp
-#include "drv/air_quality_mp503.h"
+#include "HeptaSat.h"
 
-AirQualityMp503 aq;
-
-constexpr uint8_t kUserChannel = 1;  // 1=USER1, 2=USER2, 3=USER3
-constexpr uint8_t kMcp3208CsPin = 17;
+HeptaAirQualityMp503 aq;
 
 void setup() {
-  // skip_warmup=true when an external countdown already waited 20 s
-  aq.begin(kMcp3208CsPin, static_cast<uint8_t>(4 + kUserChannel), 3.3f, true);
+  aq.begin(USER1);
 }
 
 void loop() {
-  AirQualityMp503::QualityLevel q = aq.slope();
+  HeptaAirQualityMp503::QualityLevel q = aq.slope();
 }
 ```

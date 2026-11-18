@@ -25,18 +25,15 @@ output is read through the board **MCP3208** USER payload channels
 | `float get_voltage()` | Channel voltage [V] (averaged via `AdcMcp3208`). |
 | `float get_lux()` | Approximate lux (`voltage * 200`; not factory-calibrated). |
 
-## Example
+## HEPTA-SAT example
 
 ```cpp
-#include "drv/light_temt6000.h"
+#include "HeptaSat.h"
 
-LightTemt6000 light;
-
-constexpr uint8_t kUserChannel = 1;  // 1=USER1, 2=USER2, 3=USER3
-constexpr uint8_t kMcp3208CsPin = 17;
+HeptaLightTemt6000 light;
 
 void setup() {
-  light.begin(kMcp3208CsPin, static_cast<uint8_t>(4 + kUserChannel));
+  light.begin(USER1);
 }
 
 void loop() {

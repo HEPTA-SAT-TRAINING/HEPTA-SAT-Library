@@ -1,4 +1,5 @@
 #include "hepta_eps.h"
+#include "hepta_payload_pins.h"
 
 
 // MCP3208 channel map (Sensor_Comm V4.1.1). CH5-CH7 are user payload inputs.
@@ -13,7 +14,7 @@ enum AdcChannel : uint8_t {
 
 void HeptaEps::init(void) {
   HeptaEpsBase::init();
-  adc.begin(_adc_cs_pin);
+  adc.begin(hepta_payload::adc_cs_pin);
   pinMode(_current_bus_pin, INPUT);
   pinMode(_sw_3v3_pin, OUTPUT);
   // Active-high enable: HIGH = 3V3 rail ON.

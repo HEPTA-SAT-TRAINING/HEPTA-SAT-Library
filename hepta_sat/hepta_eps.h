@@ -37,7 +37,6 @@ class HeptaEps : public HeptaEpsBase {
     AdcMcp3208 adc;
 
     const uint8_t _sw_3v3_pin = 20;
-    const uint8_t _adc_cs_pin = 17;
     // MAX4372T output (max ~2V), directly wired to the MCU ADC.
     // Shunt sits on the main bus path (schematic net CURRENT_DISCHARGE).
     const uint8_t _current_bus_pin = 28;

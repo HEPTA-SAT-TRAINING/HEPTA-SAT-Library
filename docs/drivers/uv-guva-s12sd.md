@@ -29,18 +29,15 @@ Voltage is averaged over **16** raw samples before conversion.
 | `float get_illumination_mw_m2()` | `307.0 * voltage` [mW/m²]. |
 | `float get_uv_index()` | `illumination / 200`. |
 
-## Example
+## HEPTA-SAT example
 
 ```cpp
-#include "drv/uv_guva_s12sd.h"
+#include "HeptaSat.h"
 
-UvGuvaS12sd uv;
-
-constexpr uint8_t kUserChannel = 1;  // 1=USER1, 2=USER2, 3=USER3
-constexpr uint8_t kMcp3208CsPin = 17;
+HeptaUvGuvaS12sd uv;
 
 void setup() {
-  uv.begin(kMcp3208CsPin, static_cast<uint8_t>(4 + kUserChannel));
+  uv.begin(USER1);
 }
 
 void loop() {

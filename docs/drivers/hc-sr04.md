@@ -35,18 +35,15 @@ Module documentation recommends ≥200 ms between measurements.
 | `bool get_distance_cm(float* distance_cm)` | One-way distance [cm]. |
 | `bool get_distance_m(float* distance_m)` | One-way distance [m]. |
 
-## Example
+## HEPTA-SAT example
 
 ```cpp
-#include "drv/hc_sr04.h"
+#include "HeptaSat.h"
 
-HcSr04 ultrasonic;
-
-constexpr uint8_t kTrigPin = 21;  // USER_IO_1
-constexpr uint8_t kEchoPin = 22;  // USER_IO_2
+HeptaHcSr04 ultrasonic;
 
 void setup() {
-  ultrasonic.begin(kTrigPin, kEchoPin);
+  ultrasonic.begin(USER_IO_1, USER_IO_2);
 }
 
 void loop() {
